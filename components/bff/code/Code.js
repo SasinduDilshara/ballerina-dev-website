@@ -167,7 +167,7 @@ export default function UseCases(props) {
                                 </Row>
                             </Col>
                             <Col xs={12} md={6} lg={6} className={styles.box}>
-                                <img src={`${prefix}/images/usecases/integration/bff/payload_validations.gif`} style={{ height: "auto", borderRadius: "0.7rem" }} alt="Advanced Payload Validation" />
+                                <img src={`${prefix}/images/usecases/integration/bff/multi_part.gif`} style={{ height: "auto", borderRadius: "0.7rem" }} alt="Advanced Payload Validation" />
                             </Col>
                         </Row>
                     </Container>
@@ -232,7 +232,7 @@ export default function UseCases(props) {
                                 </Row>
                             </Col>
                             <Col xs={12} md={6} lg={6} className={styles.box}>
-                                <img src={`${prefix}/images/usecases/integration/bff/payload_validations.gif`} style={{ height: "auto", borderRadius: "0.7rem" }} alt="Advanced Payload Validation" />
+                                <img src={`${prefix}/images/usecases/integration/bff/constraint_validation.gif`} style={{ height: "auto", borderRadius: "0.7rem" }} alt="Advanced Payload Validation" />
                             </Col>
                         </Row>
                     </Container>
