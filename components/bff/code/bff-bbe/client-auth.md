@@ -1,18 +1,19 @@
 ---
 title: 'Securely interact with internal/external services'
 description: Ballerina backends can securely call services with the necessary security features such as client-side OAuth2, mutual TLS, and JWT-encapsulated user data.
-url: 'https://github.com/SasinduDilshara/BFF-Samples/tree/dev/ballerina_microservices_jwt_asgardio'
+url: 'https://github.com/SasinduDilshara/BFF-Samples/tree/dev/microservices'
 ---
 ```
 service /logistics on new http:Listener(9090) {
-    resource function post cargos(Cargo cargo) returns http:Ok|http:InternalServerError {
+    resource function post cargos(Cargo cargo)
+            returns http:Ok|http:InternalServerError {
         cargoTable.add(cargo);
         http:Response|error res = serviceClient->post("/shipments", cargo);
         if res is http:Response && res.statusCode == 202 {
-            return <http:Ok>{body: "Successfully submitted the shipment request"};
+            return <http:Ok>{body: "Successfully submitted the shipment"};
         }
         return <http:InternalServerError>{
-            body: {message: "Error occurred while submitting the shipment request"}
+            body: {message: "Error occurred while submitting the shipment"}
         };
     };
 

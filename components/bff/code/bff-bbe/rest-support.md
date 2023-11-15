@@ -1,7 +1,7 @@
 ---
 title: 'Simplify backend development with native REST features'
 description: Ballerina provides REST features like path/query parameters, HTTP headers, status codes, and complex JSON structures as first-class citizens within the language itself.
-url: 'https://github.com/SasinduDilshara/BFF-Samples/tree/dev/ballerina_rest'
+url: 'https://github.com/SasinduDilshara/BFF-Samples/tree/dev/rest'
 ---
 ```
 service /sales on new http:Listener(9090) {
@@ -16,10 +16,11 @@ service /sales on new http:Listener(9090) {
         };
     };
 
-    resource function post orders(Order orderRequest) returns Order|http:BadRequest {
+    resource function post orders(Order orderRequest)
+            returns Order|http:BadRequest {
         if orders.hasKey(orderRequest.id) {
             return <http:BadRequest>{
-                body: string `Order id already exists. Order ID: ${orderRequest.id}`
+                body: string `Order id already exists.`
             };
         }
         orders.add(orderRequest);
