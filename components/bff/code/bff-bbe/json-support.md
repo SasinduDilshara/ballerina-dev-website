@@ -5,26 +5,32 @@ description: Ballerina has built-in support for multi-part payloads, constraint 
 url: 'https://github.com/SasinduDilshara/BFF-Samples/tree/dev/ballerina_rest_payload_validation'
 ---
 ```
-type Customer record {|
-    string id;
-    @constraint:String {
-        pattern: { value: re `[A-Za-z]+`, message: "Invalid first name" }
-    }
-    string name;
-|};
-
 service /crm on new http:Listener(9090) {
-    resource function post customers/[string customerId]
-            /agreement(http:Request request) returns http:Created|error {
-        mime:Entity[] bodyParts = check request.getBodyParts();
-        byte[] agreemntForm = check bodyParts[0].getByteArray();
-        check submitAgreementForm(customerId, agreemntForm);
-        return <http:Created>{body: {message: string `Customer ID: ${customerId}`}};
-    }
     
-    resource function post customers(Customer customer) returns Customer {
-        customerTable.add(customer);
-        return customer;
+    resource function get customers/[string customerId]/agreement() 
+            returns byte[]|http:InternalServerError {
+        byte[]|error agreementForm = getAgreementForm(customerId);
+        if agreementForm is error {
+            return <http:InternalServerError>{
+                body: {message: "Agreement form not found for the customer ID: " + customerId}
+            };
+        }
+        return agreementForm;
+    }
+
+    resource function post customers(http:Request request) 
+            returns http:Created|http:InternalServerError {
+        do {
+            mime:Entity[] bodyParts = check request.getBodyParts();
+            string registrationDataString = check bodyParts[0].getText();
+            CustomerData registrationData = check registrationDataString.fromJsonStringWithType();
+            byte[] image = check bodyParts[1].getByteArray();
+            byte[] agreemntForm = check bodyParts[2].getByteArray();
+            string customerId = check registerCustomer(registrationData, agreemntForm, image);
+            return <http:Created>{body: {message: "Customer registered successfully.", customerId}};
+        } on fail error e {
+            return <http:InternalServerError>{body: {message: string `Error while processing the request: ${e.message()}`}};
+        }
     }
 }
 ```

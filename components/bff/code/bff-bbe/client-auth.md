@@ -5,24 +5,19 @@ url: 'https://github.com/SasinduDilshara/BFF-Samples/tree/dev/ballerina_microser
 ---
 ```
 service /logistics on new http:Listener(9090) {
-    resource function post cargos(Cargo cargo) returns Cargo|error {
+    resource function post cargos(Cargo cargo) returns http:Ok|http:InternalServerError {
         cargoTable.add(cargo);
-        http:Client serviceClient = check new ("http://localhost:9094", auth = [{
-                    tokenUrl: issuer,
-                    clientId: audience,
-                    clientSecret: clientSecret,
-                    scopes: ["cargo_read"]
-                }],
-            secureSocket = {
-                key: {
-                    certFile: "../resource/path/to/public.crt",
-                    keyFile: "../resource/path/to/private.key"
-                },
-                cert: "./resources/public.cer"
-            }
-        );
-        http:Response res = check serviceClient->post("/shipments", cargo);
-        return cargo;
-    }
+        http:Response|error res = serviceClient->post("/shipments", cargo);
+        if res is http:Response && res.statusCode == 202 {
+            return <http:Ok>{body: "Successfully submitted the shipment request"};
+        }
+        return <http:InternalServerError>{
+            body: {message: "Error occurred while submitting the shipment request"}
+        };
+    };
+
+    resource function get cargos() returns Cargo[] {
+        return cargoTable.toArray();
+    };
 }
 ```

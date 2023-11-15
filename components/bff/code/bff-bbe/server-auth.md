@@ -5,33 +5,30 @@ url: 'https://github.com/SasinduDilshara/BFF-Samples/tree/dev/ballerina_rest_asg
 ---
 ```
 @http:ServiceConfig {
-    auth: [{
-        jwtValidatorConfig: {
-            issuer: issuer,
-            audience: audience,
-            signatureConfig: {
-                jwksConfig: {
-                    url: jwksUrl
+    auth: [
+        {
+            jwtValidatorConfig: {
+                issuer: issuer,
+                audience: audience,
+                signatureConfig: {
+                    jwksConfig: {
+                        url: jwksUrl
+                    }
                 }
-            }
-        },
-        scopes: ["order_insert", "order_read"]
-    }]
+            },
+            scopes: ["order_insert", "order_read", "cargo_insert", "cargo_read"]
+        }
+    ]
 }
 service /sales on new http:Listener(9090) {
     @http:ResourceConfig {
-        auth: { scopes: ["order_insert"] }
+        auth: {
+            scopes: ["order_insert"]
+        }
     }
-    resource function post orders(Order 'order) returns Order {
-        orderTable.add('order);
-        return 'order;
-    };
-
-    @http:ResourceConfig {
-        auth: { scopes: ["order_read"] }
-    }
-    resource function get orders() returns Order[] {
-        return orderTable.toArray();
+    resource function post orders(Order orders) returns http:Ok {
+        orderTable.add(orders);
+        return <http:Ok>{body: {message: "Order submitted successfully"}};
     };
 }
 ```

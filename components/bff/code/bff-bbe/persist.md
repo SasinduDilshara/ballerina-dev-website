@@ -7,22 +7,23 @@ url: 'https://github.com/SasinduDilshara/BFF-Samples/tree/dev/ballerina_persists
 Client dbClient = check new ();
 
 service /sales on new http:Listener(9090) {
-    resource function post orders(Order[] orders) returns string[]|error {
-        string[] orderIds = check dbClient->/orders.post(orders);
-        return orderIds;
+    resource function get orders() returns Order[]|error {
+        return from Order entry in orderDatabase->/orders(Order)
+            select entry;
     };
-    
-    resource function get orders/[string id]() returns Order|http:BadRequest {
-        Order|error 'order = dbClient->/orders/[id];
-        if 'order is error {
-            http:BadRequest res = {
-                body: {
-                    message: 'order.message()
-                }
-            };
-            return res;
+
+    resource function post orders(Order orderEntry) returns http:Ok|http:InternalServerError|http:BadRequest {
+        orderEntry.cargoId = getCargoId();
+        string[]|persist:Error submitResult = orderDatabase->/orders.post([orderEntry]);
+        if submitResult is string[] {
+            return http:OK;
+        } 
+        if submitResult is persist:ConstraintViolationError {
+            return <http:BadRequest>{body: {message: string `Invalid cargo id: ${orderEntry.cargoId}`}};
         }
-        return 'order;
+        return <http:InternalServerError>{
+            body: {message: string `Error while inserting an order ${submitResult.message()}`}
+        };
     };
 }
 ```

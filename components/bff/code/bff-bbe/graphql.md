@@ -4,20 +4,32 @@ description: With Ballerina's built-in GraphQL functionality, developers can sim
 url: 'https://github.com/SasinduDilshara/BFF-Samples/tree/dev/ballerina_graphql'
 ---
 ```
-public type Order record {|
-    readonly string orderId;
+type Order record {|
+    readonly string id;
     string customerId;
+    string? shipId;
+    Address? shippingAddress;
+    string date;
+    OrderStatus status;
     int quantity;
+    string item;
+|};
+
+type Address record {|
+    string number;
+    string street;
+    string city;
+    string state;
 |};
 
 service /sales on new graphql:Listener(9090) {
     resource function get orders(string? customerId) returns Order[] {
         if customerId is () {
-            return orderTable.toArray();
+            return orders.toArray();
         }
-        return from Order 'order in orderTable
-            where 'order.customerId == customerId
-            select 'order;
+        return from Order entry in orders
+            where entry.customerId == customerId
+            select entry;
     }
 }
 ```

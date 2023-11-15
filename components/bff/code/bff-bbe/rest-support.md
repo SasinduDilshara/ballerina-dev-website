@@ -5,22 +5,25 @@ url: 'https://github.com/SasinduDilshara/BFF-Samples/tree/dev/ballerina_rest'
 ---
 ```
 service /sales on new http:Listener(9090) {
+
     resource function get orders() returns Order[] {
-        return orderTable.toArray();
+        return orders.toArray();
     };
 
     resource function get orders/[string id]() returns Order|http:NotFound {
-        if orderTable.hasKey(id) {
-            return orderTable.get(id);
-        }
-        return {
-            body: string `Order not found. ID: ${id};`
+        return orders[id] ?: <http:NotFound>{
+            body: string `Order not found. Order ID: ${id}`
         };
     };
 
-    resource function post orders(Order 'order) returns Order {
-        orderTable.add('order);
-        return 'order;
-    };
+    resource function post orders(Order orderRequest) returns Order|http:BadRequest {
+        if orders.hasKey(orderRequest.id) {
+            return <http:BadRequest>{
+                body: string `Order id already exists. Order ID: ${orderRequest.id}`
+            };
+        }
+        orders.add(orderRequest);
+        return orderRequest;
+    }
 }
 ```
