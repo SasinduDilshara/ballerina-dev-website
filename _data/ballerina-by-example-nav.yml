@@ -1729,8 +1729,26 @@ sublinks:
           - title: Read file
             id: 2
             url: smb-client-read-file
-      - title: Database access
+      - title: SMB service
         id: 65
+        sublinks:
+          - title: Receive file
+            id: 1
+            url: smb-service-receive-file
+          - title: Caller object
+            id: 2
+            url: smb-caller
+      - title: SMB client
+        id: 66
+        sublinks:
+          - title: Write file
+            id: 1
+            url: smb-client-write-file
+          - title: Read file
+            id: 2
+            url: smb-client-read-file
+      - title: Database access
+        id: 67
         sublinks:
           - title: Simple query
             id: 1
@@ -1754,7 +1772,7 @@ sublinks:
             id: 7
             url: mysql-call-stored-procedures
       - title: Change data capture
-        id: 66
+        id: 68
         sublinks:
           - title: Listen to database
             id: 1
@@ -1861,17 +1879,20 @@ sublinks:
           - title: Log file rotation
             id: 5
             url: log-file-rotation
-          - title: Child loggers with context
+          - title: Log file rotation
             id: 6
+            url: log-file-rotation
+          - title: Child loggers with context
+            id: 7
             url: child-loggers-with-context
           - title: Logger from configuration
-            id: 7
+            id: 8
             url: logger-from-config
           - title: Custom logger
-            id: 8
+            id: 9
             url: custom-logger
           - title: Sensitive data logging
-            id: 9
+            id: 10
             url: sensitive-data-logging
       - title: EDI
         id: 9
@@ -1951,14 +1972,26 @@ sublinks:
           - title: Unpack an untrusted archive
             id: 3
             url: zip-decompress-untrusted
-      - title: XSLT
+      - title: Zip
         id: 16
+        sublinks:
+          - title: Create a ZIP archive
+            id: 1
+            url: zip-compress
+          - title: Extract a ZIP archive
+            id: 2
+            url: zip-decompress
+          - title: Unpack an untrusted archive
+            id: 3
+            url: zip-decompress-untrusted
+      - title: XSLT
+        id: 17
         sublinks:
           - title: XSLT transformation
             id: 1
             url: xslt-transformation
       - title: XML data
-        id: 17
+        id: 18
         sublinks:
           - title: XML to JSON conversion
             id: 1
@@ -1973,7 +2006,7 @@ sublinks:
             id: 4
             url: xml-from-record-conversion
       - title: YAML data
-        id: 18
+        id: 19
         sublinks:
           - title: YAML to anydata
             id: 1
@@ -1985,7 +2018,7 @@ sublinks:
             id: 3
             url: anydata-to-yaml-string
       - title: CSV data
-        id: 19
+        id: 20
         sublinks:
           - title: Convert CSV string to records
             id: 1
@@ -2006,7 +2039,7 @@ sublinks:
             id: 6
             url: csv-user-configurations
       - title: XLSX data
-        id: 20
+        id: 21
         sublinks:
           - title: Parse Excel file to records
             id: 1
@@ -2021,7 +2054,7 @@ sublinks:
             id: 4
             url: xlsx-to-records-advanced
       - title: Constraint
-        id: 21
+        id: 22
         sublinks:
           - title: Constraint validations
             id: 1
@@ -2041,6 +2074,12 @@ sublinks:
           - title: Direct LLM calls with multimodal input
             id: 3
             url: direct-llm-calls-with-multimodal-input
+          - title: Direct LLM calls with a specific model provider
+            id: 4
+            url: direct-llm-calls-with-model-provider
+          - title: Direct LLM calls with a local model using Ollama
+            id: 5
+            url: direct-llm-calls-with-ollama
       - title: Retrieval-augmented generation (RAG)
         id: 2
         sublinks:
@@ -2053,6 +2092,24 @@ sublinks:
           - title: RAG query with external vector store
             id: 3
             url: rag-query-with-external-vector-store
+          - title: Document loading
+            id: 4
+            url: rag-document-loading
+          - title: Document chunking
+            id: 5
+            url: rag-document-chunking
+          - title: Embeddings with a specific embedding provider
+            id: 6
+            url: rag-embedding-provider
+          - title: RAG with pgvector vector store
+            id: 7
+            url: rag-with-pgvector-vector-store
+          - title: Vector search with metadata filters
+            id: 8
+            url: rag-query-with-metadata-filters
+          - title: Custom knowledge base
+            id: 9
+            url: rag-custom-knowledge-base
       - title: Model context protocol (MCP)
         id: 3
         sublinks:
@@ -2062,6 +2119,18 @@ sublinks:
           - title: MCP advanced service
             id: 2
             url: mcp-service-advanced
+          - title: MCP client
+            id: 3
+            url: mcp-client
+          - title: MCP service with sessions
+            id: 4
+            url: mcp-service-with-sessions
+          - title: MCP tools with HTTP request binding
+            id: 5
+            url: mcp-service-http-request-binding
+          - title: MCP service security
+            id: 6
+            url: mcp-service-security
       - title: AI agents
         id: 4
         sublinks:
@@ -2080,12 +2149,45 @@ sublinks:
           - title: Agent with tool kits
             id: 5
             url: ai-agent-tool-kit
+          - title: Agent with memory
+            id: 6
+            url: ai-agent-memory
+          - title: Agent with persistent memory
+            id: 7
+            url: ai-agent-persistent-memory
+          - title: Memory overflow handling
+            id: 8
+            url: ai-agent-memory-overflow-handling
+          - title: Human-in-the-loop tool approval
+            id: 9
+            url: ai-agent-human-in-the-loop
+          - title: Agent with typed input and output
+            id: 10
+            url: ai-agent-typed-input-output
+          - title: Agent tool loading strategy
+            id: 11
+            url: ai-agent-tool-loading-strategy
+          - title: Chat client
+            id: 12
+            url: ai-chat-client
+          - title: Agent execution trace
+            id: 13
+            url: ai-agent-execution-trace
+          - title: Agent evaluation
+            id: 14
+            url: ai-agent-evaluation
       - title: Natural expressions
         id: 5
         sublinks:
           - title: Natural expressions
             id: 1
             url: natural-expressions
+          - title: Natural expressions with a specific model provider
+            id: 2
+            url: natural-expressions-with-model-provider
+          - title: Natural functions
+            id: 3
+            url: natural-functions
   - title: Deployment
     id: 5
     sublinks:

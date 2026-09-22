@@ -1,0 +1,15 @@
+{
+  "title": "MCP service with sessions",
+  "description": "This BBE demonstrates how to manage client sessions in an MCP server.",
+  "keywords": [
+    "ballerina",
+    "ballerina by example",
+    "BBE",
+    "ai",
+    "llm",
+    "mcp",
+    "session"
+  ],
+  "permalink": "/learn/by-example/mcp-service-with-sessions/",
+  "active": "mcp-service-with-sessions"
+}

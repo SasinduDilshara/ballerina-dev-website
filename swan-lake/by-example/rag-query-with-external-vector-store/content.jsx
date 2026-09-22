@@ -161,7 +161,7 @@ export function RagQueryWithExternalVectorStore({ codeSnippets }) {
             className="bg-transparent border-0 m-0 p-2 ms-auto"
             onClick={() => {
               window.open(
-                "https://github.com/ballerina-platform/ballerina-distribution/tree/v2201.13.5/examples/rag-query-with-external-vector-store",
+                "https://github.com/ballerina-platform/ballerina-distribution/tree/v2201.13.6/examples/rag-query-with-external-vector-store",
                 "_blank",
               );
             }}
@@ -390,7 +390,10 @@ export function RagQueryWithExternalVectorStore({ codeSnippets }) {
           </Link>
         </Col>
         <Col sm={6}>
-          <Link title="MCP service" href="/learn/by-example/mcp-service/">
+          <Link
+            title="Document loading"
+            href="/learn/by-example/rag-document-loading/"
+          >
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
                 <span className="btnNext">Next</span>
@@ -399,7 +402,7 @@ export function RagQueryWithExternalVectorStore({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  MCP service
+                  Document loading
                 </span>
               </div>
               <svg

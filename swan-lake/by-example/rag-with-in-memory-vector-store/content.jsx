@@ -132,7 +132,7 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
             className="bg-transparent border-0 m-0 p-2 ms-auto"
             onClick={() => {
               window.open(
-                "https://github.com/ballerina-platform/ballerina-distribution/tree/v2201.13.5/examples/rag-with-in-memory-vector-store",
+                "https://github.com/ballerina-platform/ballerina-distribution/tree/v2201.13.6/examples/rag-with-in-memory-vector-store",
                 "_blank",
               );
             }}
@@ -347,8 +347,8 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="Direct LLM calls with multimodal input"
-            href="/learn/by-example/direct-llm-calls-with-multimodal-input/"
+            title="Direct LLM calls with a local model using Ollama"
+            href="/learn/by-example/direct-llm-calls-with-ollama/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
@@ -375,7 +375,7 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Direct LLM calls with multimodal input
+                  Direct LLM calls with a local model using Ollama
                 </span>
               </div>
             </div>

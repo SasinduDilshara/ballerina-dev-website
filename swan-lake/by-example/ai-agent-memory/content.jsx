@@ -1,0 +1,388 @@
+import React, { useState, createRef } from "react";
+import { Container, Row, Col } from "react-bootstrap";
+import DOMPurify from "dompurify";
+import { copyToClipboard, extractOutput } from "../../../utils/bbe";
+import Link from "next/link";
+
+export const codeSnippetData = [
+  `import ballerina/ai;
+import ballerina/io;
+
+// Agents use memory to keep the conversation history of each session, so that follow-up
+// questions can refer to earlier messages. By default, an agent uses in-memory short-term
+// memory with a fixed capacity. Configure the memory explicitly to control the capacity
+// (the number of recent user, assistant, and tool messages retained per session; the system
+// message is kept separately), the store, or the overflow handling.
+final ai:Memory memory = check new ai:ShortTermMemory(check new ai:InMemoryShortTermMemoryStore(20));
+
+final ai:Agent travelAgent = check new ({
+    systemPrompt: {
+        role: "Travel Assistant",
+        instructions: string \`You help users plan trips. Remember the details the user
+            shares and use them in later answers. Keep answers to two sentences.\`
+    },
+    // Use the default model provider (with configuration added via a Ballerina VS Code command).
+    model: check ai:getDefaultModelProvider(),
+    memory
+});
+
+public function main() returns error? {
+    // Messages exchanged in a session are stored in memory against the session ID,
+    // so the agent can use the earlier context to answer follow-up questions.
+    string sessionId = "user-1";
+    string response = check travelAgent.run(
+            "I'm planning a 5-day trip to Japan in April with my two kids.", sessionId);
+    io:println(response);
+    response = check travelAgent.run(
+            "Suggest one activity for the trip that suits the people travelling.", sessionId);
+    io:println(response);
+
+    // Each session has its own memory. A different session does not have access
+    // to the conversation above.
+    response = check travelAgent.run("Where am I planning to travel?", "user-2");
+    io:println(response);
+
+    // The stored messages can be retrieved or deleted using the memory instance.
+    ai:ChatMessage[] messages = check memory.get(sessionId);
+    io:println("\\nMessages stored for session 'user-1': ", messages.length());
+    check memory.delete(sessionId);
+}
+`,
+];
+
+export function AiAgentMemory({ codeSnippets }) {
+  const [codeClick1, updateCodeClick1] = useState(false);
+
+  const [outputClick1, updateOutputClick1] = useState(false);
+  const ref1 = createRef();
+
+  const [btnHover, updateBtnHover] = useState([false, false]);
+
+  return (
+    <Container className="bbeBody d-flex flex-column h-100">
+      <h1>Agent with memory</h1>
+
+      <p>
+        AI agents use memory to keep the conversation history of each session,
+        so that the LLM can use the earlier context when answering follow-up
+        questions. Memory is keyed by a session ID, which allows a single agent
+        to serve many users or conversations concurrently while keeping their
+        histories separate.
+      </p>
+
+      <p>
+        By default, an agent is configured with in-memory short-term memory (
+        <code>ai:ShortTermMemory</code> with an{" "}
+        <code>ai:InMemoryShortTermMemoryStore</code>) that retains a fixed
+        number of recent messages per session. You can configure the memory
+        explicitly to change the capacity, use a persistent store (e.g.,
+        PostgreSQL, Redis, or SQLite via the <code>ballerinax/ai.memory.*</code>{" "}
+        and <code>ballerinax/ai.sqlite</code> modules), or customize how
+        overflow is handled. To create a stateless agent, set the{" "}
+        <code>memory</code> field to <code>()</code>.
+      </p>
+
+      <p>
+        This example demonstrates how conversation history is retained per
+        session and how to inspect and clear the stored messages.
+      </p>
+
+      <blockquote>
+        <p>
+          Note: This example uses the default model provider implementation. To
+          generate the necessary configuration, open up the VS Code command
+          palette (<code>Ctrl</code> + <code>Shift</code> + <code>P</code> or{" "}
+          <code>command</code> + <code>shift</code> + <code>P</code>), and run
+          the <code>Configure default WSO2 Model Provider</code> command to add
+          your configuration to the <code>Config.toml</code> file. If not
+          already logged in, log in to the Ballerina Copilot when prompted.
+          Alternatively, to use your own keys, use the relevant{" "}
+          <code>ballerinax/ai.&lt;provider&gt;</code> model provider
+          implementation.
+        </p>
+      </blockquote>
+
+      <p>
+        For more information on the underlying module, see the{" "}
+        <a href="https://lib.ballerina.io/ballerina/ai/latest/">
+          <code>ballerina/ai</code> module
+        </a>
+        .
+      </p>
+
+      <Row
+        className="bbeCode mx-0 py-0 rounded 
+      "
+        style={{ marginLeft: "0px" }}
+      >
+        <Col className="d-flex align-items-start" sm={12}>
+          {codeClick1 ? (
+            <button
+              className="bg-transparent border-0 m-0 p-2  ms-auto"
+              disabled
+              aria-label="Copy to Clipboard Check"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#20b6b0"
+                className="bi bi-check"
+                viewBox="0 0 16 16"
+              >
+                <title>Copied</title>
+                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              className="bg-transparent border-0 m-0 p-2  ms-auto"
+              onClick={() => {
+                updateCodeClick1(true);
+                copyToClipboard(codeSnippetData[0]);
+                setTimeout(() => {
+                  updateCodeClick1(false);
+                }, 3000);
+              }}
+              aria-label="Copy to Clipboard"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#000"
+                className="bi bi-clipboard"
+                viewBox="0 0 16 16"
+              >
+                <title>Copy to Clipboard</title>
+                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+              </svg>
+            </button>
+          )}
+        </Col>
+        <Col sm={12}>
+          {codeSnippets[0] != undefined && (
+            <div
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(codeSnippets[0]),
+              }}
+            />
+          )}
+        </Col>
+      </Row>
+
+      <Row
+        className="bbeOutput mx-0 py-0 rounded "
+        style={{ marginLeft: "0px" }}
+      >
+        <Col sm={12} className="d-flex align-items-start">
+          {outputClick1 ? (
+            <button
+              className="bg-transparent border-0 m-0 p-2 ms-auto"
+              aria-label="Copy to Clipboard Check"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#20b6b0"
+                className="output-btn bi bi-check"
+                viewBox="0 0 16 16"
+              >
+                <title>Copied</title>
+                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              className="bg-transparent border-0 m-0 p-2 ms-auto"
+              onClick={() => {
+                updateOutputClick1(true);
+                const extractedText = extractOutput(ref1.current.innerText);
+                copyToClipboard(extractedText);
+                setTimeout(() => {
+                  updateOutputClick1(false);
+                }, 3000);
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#EEEEEE"
+                className="output-btn bi bi-clipboard"
+                viewBox="0 0 16 16"
+                aria-label="Copy to Clipboard"
+              >
+                <title>Copy to Clipboard</title>
+                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+              </svg>
+            </button>
+          )}
+        </Col>
+        <Col sm={12}>
+          <pre ref={ref1}>
+            <code className="d-flex flex-column">
+              <span>{`\$ bal run ai_agent_memory.bal`}</span>
+              <span>{`That sounds exciting! Do you have specific cities or attractions in mind for your trip to Japan with your kids?`}</span>
+              <span>{`A great activity for your family would be visiting Tokyo Disneyland, where your kids can enjoy rides, meet characters, and experience the magic of Disney in a unique Japanese setting. It’s a fun and memorable way to spend a day during your 5-day trip!`}</span>
+              <span>{`You haven't shared your travel destination yet. Please let me know where you're planning to go!`}</span>
+              <span>{`
+`}</span>
+              <span>{`Messages stored for session 'user-1': 5`}</span>
+            </code>
+          </pre>
+        </Col>
+      </Row>
+
+      <h2>Related links</h2>
+
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="/learn/by-example/ai-agent-persistent-memory/">
+              The Agent with persistent memory example
+            </a>
+          </span>
+        </li>
+      </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="/learn/by-example/ai-agent-memory-overflow-handling/">
+              The Memory overflow handling example
+            </a>
+          </span>
+        </li>
+      </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="/learn/by-example/chat-agents/">The Chat agents example</a>
+          </span>
+        </li>
+      </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="https://central.ballerina.io/ballerinax/ai.memory.postgresql/latest">
+              The <code>ballerinax/ai.memory.postgresql</code> module
+            </a>
+          </span>
+        </li>
+      </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="https://central.ballerina.io/ballerinax/ai.memory.redis/latest">
+              The <code>ballerinax/ai.memory.redis</code> module
+            </a>
+          </span>
+        </li>
+      </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="https://central.ballerina.io/ballerinax/ai.memory.mssql/latest">
+              The <code>ballerinax/ai.memory.mssql</code> module
+            </a>
+          </span>
+        </li>
+      </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="https://central.ballerina.io/ballerinax/ai.sqlite/latest">
+              The <code>ballerinax/ai.sqlite</code> module
+            </a>
+          </span>
+        </li>
+      </ul>
+      <span style={{ marginBottom: "20px" }}></span>
+
+      <Row className="mt-auto mb-5">
+        <Col sm={6}>
+          <Link
+            title="Agent with tool kits"
+            href="/learn/by-example/ai-agent-tool-kit/"
+          >
+            <div className="btnContainer d-flex align-items-center me-auto">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="#3ad1ca"
+                className={`${
+                  btnHover[0] ? "btnArrowHover" : "btnArrow"
+                } bi bi-arrow-right`}
+                viewBox="0 0 16 16"
+                onMouseEnter={() => updateBtnHover([true, false])}
+                onMouseOut={() => updateBtnHover([false, false])}
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"
+                />
+              </svg>
+              <div className="d-flex flex-column ms-4">
+                <span className="btnPrev">Previous</span>
+                <span
+                  className={btnHover[0] ? "btnTitleHover" : "btnTitle"}
+                  onMouseEnter={() => updateBtnHover([true, false])}
+                  onMouseOut={() => updateBtnHover([false, false])}
+                >
+                  Agent with tool kits
+                </span>
+              </div>
+            </div>
+          </Link>
+        </Col>
+        <Col sm={6}>
+          <Link
+            title="Agent with persistent memory"
+            href="/learn/by-example/ai-agent-persistent-memory/"
+          >
+            <div className="btnContainer d-flex align-items-center ms-auto">
+              <div className="d-flex flex-column me-4">
+                <span className="btnNext">Next</span>
+                <span
+                  className={btnHover[1] ? "btnTitleHover" : "btnTitle"}
+                  onMouseEnter={() => updateBtnHover([false, true])}
+                  onMouseOut={() => updateBtnHover([false, false])}
+                >
+                  Agent with persistent memory
+                </span>
+              </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="#3ad1ca"
+                className={`${
+                  btnHover[1] ? "btnArrowHover" : "btnArrow"
+                } bi bi-arrow-right`}
+                viewBox="0 0 16 16"
+                onMouseEnter={() => updateBtnHover([false, true])}
+                onMouseOut={() => updateBtnHover([false, false])}
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"
+                />
+              </svg>
+            </div>
+          </Link>
+        </Col>
+      </Row>
+    </Container>
+  );
+}

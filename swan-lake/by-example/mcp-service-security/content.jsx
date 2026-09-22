@@ -1,0 +1,485 @@
+import React, { useState, createRef } from "react";
+import { Container, Row, Col } from "react-bootstrap";
+import DOMPurify from "dompurify";
+import { copyToClipboard, extractOutput } from "../../../utils/bbe";
+import Link from "next/link";
+
+export const codeSnippetData = [
+  `import ballerina/mcp;
+
+type Salary record {|
+    string employeeId;
+    decimal amount;
+    string currency;
+|};
+
+// The MCP Streamable HTTP transport is built on HTTP, so the listener accepts the
+// same configuration as an \`http:Listener\`, including TLS via \`secureSocket\`.
+listener mcp:StreamableHttpListener securedListener = new (9093,
+    secureSocket = {
+        key: {
+            certFile: "../resource/path/to/public.crt",
+            keyFile: "../resource/path/to/private.key"
+        }
+    }
+);
+
+// Secure the MCP service with basic authentication using the file user store and
+// enforce authorization with scopes. The \`httpConfig\` field accepts the same
+// configuration as the \`@http:ServiceConfig\` annotation, so JWT or OAuth2
+// authentication can be configured in the same way.
+@mcp:StreamableHttpServiceConfig {
+    info: {name: "Payroll MCP Server", version: "1.0.0"},
+    httpConfig: {
+        auth: [
+            {
+                fileUserStoreConfig: {},
+                scopes: ["admin"]
+            }
+        ]
+    }
+}
+service mcp:StreamableHttpService /mcp on securedListener {
+
+    # Get the salary details of an employee.
+    #
+    # + employeeId - The employee ID
+    # + return - The salary details
+    remote function getSalary(string employeeId) returns Salary {
+        return {employeeId, amount: 5000.00, currency: "USD"};
+    }
+}
+`,
+  `[[ballerina.auth.users]]
+username="alice"
+password="alice@123"
+scopes=["admin"]
+
+[[ballerina.auth.users]]
+username="bob"
+password="bob@123"
+scopes=["developer"]
+`,
+];
+
+export function McpServiceSecurity({ codeSnippets }) {
+  const [codeClick1, updateCodeClick1] = useState(false);
+  const [codeClick2, updateCodeClick2] = useState(false);
+
+  const [outputClick1, updateOutputClick1] = useState(false);
+  const ref1 = createRef();
+  const [outputClick2, updateOutputClick2] = useState(false);
+  const ref2 = createRef();
+
+  const [btnHover, updateBtnHover] = useState([false, false]);
+
+  return (
+    <Container className="bbeBody d-flex flex-column h-100">
+      <h1>Model Context Protocol (MCP) service security</h1>
+
+      <p>
+        MCP servers that expose tools to AI agents often need to be secured, so
+        that only authenticated and authorized clients can discover and call the
+        tools. Since the MCP Streamable HTTP transport is built on HTTP, an MCP
+        service can be secured with the same mechanisms as an{" "}
+        <code>http:Service</code>: TLS on the listener via the{" "}
+        <code>secureSocket</code> configuration, and authentication and
+        authorization via the <code>auth</code> field of the{" "}
+        <code>httpConfig</code> configuration in the{" "}
+        <code>@mcp:StreamableHttpServiceConfig</code> annotation. Basic
+        authentication (file or LDAP user store), JWT, and OAuth2 are supported.
+      </p>
+
+      <p>
+        This example demonstrates an MCP server secured with TLS and basic
+        authentication using the file user store, with scope-based
+        authorization. Requests without valid credentials or without the
+        required scope are rejected before the tool is invoked.
+      </p>
+
+      <Row
+        className="bbeCode mx-0 py-0 rounded 
+      "
+        style={{ marginLeft: "0px" }}
+      >
+        <Col className="d-flex align-items-start" sm={12}>
+          {codeClick1 ? (
+            <button
+              className="bg-transparent border-0 m-0 p-2  ms-auto"
+              disabled
+              aria-label="Copy to Clipboard Check"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#20b6b0"
+                className="bi bi-check"
+                viewBox="0 0 16 16"
+              >
+                <title>Copied</title>
+                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              className="bg-transparent border-0 m-0 p-2  ms-auto"
+              onClick={() => {
+                updateCodeClick1(true);
+                copyToClipboard(codeSnippetData[0]);
+                setTimeout(() => {
+                  updateCodeClick1(false);
+                }, 3000);
+              }}
+              aria-label="Copy to Clipboard"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#000"
+                className="bi bi-clipboard"
+                viewBox="0 0 16 16"
+              >
+                <title>Copy to Clipboard</title>
+                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+              </svg>
+            </button>
+          )}
+        </Col>
+        <Col sm={12}>
+          {codeSnippets[0] != undefined && (
+            <div
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(codeSnippets[0]),
+              }}
+            />
+          )}
+        </Col>
+      </Row>
+
+      <blockquote>
+        <p>
+          <strong>Info:</strong> As a prerequisite to running the service,
+          populate the <code>Config.toml</code> file correctly with the user
+          information as shown below.
+        </p>
+      </blockquote>
+
+      <Row
+        className="bbeCode mx-0 py-0 rounded 
+      "
+        style={{ marginLeft: "0px" }}
+      >
+        <Col className="d-flex align-items-start" sm={12}>
+          {codeClick2 ? (
+            <button
+              className="bg-transparent border-0 m-0 p-2  ms-auto"
+              disabled
+              aria-label="Copy to Clipboard Check"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#20b6b0"
+                className="bi bi-check"
+                viewBox="0 0 16 16"
+              >
+                <title>Copied</title>
+                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              className="bg-transparent border-0 m-0 p-2  ms-auto"
+              onClick={() => {
+                updateCodeClick2(true);
+                copyToClipboard(codeSnippetData[1]);
+                setTimeout(() => {
+                  updateCodeClick2(false);
+                }, 3000);
+              }}
+              aria-label="Copy to Clipboard"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#000"
+                className="bi bi-clipboard"
+                viewBox="0 0 16 16"
+              >
+                <title>Copy to Clipboard</title>
+                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+              </svg>
+            </button>
+          )}
+        </Col>
+        <Col sm={12}>
+          {codeSnippets[1] != undefined && (
+            <div
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(codeSnippets[1]),
+              }}
+            />
+          )}
+        </Col>
+      </Row>
+
+      <p>Run the service by executing the command below.</p>
+
+      <Row
+        className="bbeOutput mx-0 py-0 rounded "
+        style={{ marginLeft: "0px" }}
+      >
+        <Col sm={12} className="d-flex align-items-start">
+          {outputClick1 ? (
+            <button
+              className="bg-transparent border-0 m-0 p-2 ms-auto"
+              aria-label="Copy to Clipboard Check"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#20b6b0"
+                className="output-btn bi bi-check"
+                viewBox="0 0 16 16"
+              >
+                <title>Copied</title>
+                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              className="bg-transparent border-0 m-0 p-2 ms-auto"
+              onClick={() => {
+                updateOutputClick1(true);
+                const extractedText = extractOutput(ref1.current.innerText);
+                copyToClipboard(extractedText);
+                setTimeout(() => {
+                  updateOutputClick1(false);
+                }, 3000);
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#EEEEEE"
+                className="output-btn bi bi-clipboard"
+                viewBox="0 0 16 16"
+                aria-label="Copy to Clipboard"
+              >
+                <title>Copy to Clipboard</title>
+                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+              </svg>
+            </button>
+          )}
+        </Col>
+        <Col sm={12}>
+          <pre ref={ref1}>
+            <code className="d-flex flex-column">
+              <span>{`\$ bal run mcp_service_security.bal`}</span>
+            </code>
+          </pre>
+        </Col>
+      </Row>
+
+      <p>
+        Invoke the service using the cURL commands below. The first request uses
+        a user with the <code>admin</code> scope, the second uses a user without
+        it, and the third sends no credentials.
+      </p>
+
+      <Row
+        className="bbeOutput mx-0 py-0 rounded "
+        style={{ marginLeft: "0px" }}
+      >
+        <Col sm={12} className="d-flex align-items-start">
+          {outputClick2 ? (
+            <button
+              className="bg-transparent border-0 m-0 p-2 ms-auto"
+              aria-label="Copy to Clipboard Check"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#20b6b0"
+                className="output-btn bi bi-check"
+                viewBox="0 0 16 16"
+              >
+                <title>Copied</title>
+                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              className="bg-transparent border-0 m-0 p-2 ms-auto"
+              onClick={() => {
+                updateOutputClick2(true);
+                const extractedText = extractOutput(ref2.current.innerText);
+                copyToClipboard(extractedText);
+                setTimeout(() => {
+                  updateOutputClick2(false);
+                }, 3000);
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#EEEEEE"
+                className="output-btn bi bi-clipboard"
+                viewBox="0 0 16 16"
+                aria-label="Copy to Clipboard"
+              >
+                <title>Copy to Clipboard</title>
+                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+              </svg>
+            </button>
+          )}
+        </Col>
+        <Col sm={12}>
+          <pre ref={ref2}>
+            <code className="d-flex flex-column">
+              <span>{`\$ curl -k -u alice:alice@123 -X POST https://localhost:9093/mcp -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"getSalary","arguments":{"employeeId":"E-1001"}}}'`}</span>
+              <span>{`{"jsonrpc":"2.0", "id":1, "result":{"content":[{"type":"text", "text":"{\\"employeeId\\":\\"E-1001\\",\\"amount\\":5000.00,\\"currency\\":\\"USD\\"}"}]}}`}</span>
+              <span>{`
+`}</span>
+              <span>{`\$ curl -k -u bob:bob@123 -X POST https://localhost:9093/mcp -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"getSalary","arguments":{"employeeId":"E-1001"}}}'`}</span>
+              <span>{`{"timestamp":"2026-09-21T09:55:36.833494Z", "status":403, "reason":"Forbidden", "message":"", "path":"/mcp", "method":"POST"}`}</span>
+              <span>{`
+`}</span>
+              <span>{`\$ curl -k -X POST https://localhost:9093/mcp -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"getSalary","arguments":{"employeeId":"E-1001"}}}'`}</span>
+              <span>{`{"timestamp":"2026-09-21T09:55:36.878472Z", "status":401, "reason":"Unauthorized", "message":"", "path":"/mcp", "method":"POST"}`}</span>
+            </code>
+          </pre>
+        </Col>
+      </Row>
+
+      <h2>Related links</h2>
+
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="/learn/by-example/mcp-service/">The MCP service example</a>
+          </span>
+        </li>
+      </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="/learn/by-example/mcp-service-http-request-binding/">
+              The MCP tools with HTTP request binding example
+            </a>
+          </span>
+        </li>
+      </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="https://lib.ballerina.io/ballerina/http/latest#ListenerAuthConfig">
+              <code>http:ListenerAuthConfig</code> type - API documentation
+            </a>
+          </span>
+        </li>
+      </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="https://lib.ballerina.io/ballerina/auth/latest/">
+              <code>auth</code> module - API documentation
+            </a>
+          </span>
+        </li>
+      </ul>
+      <span style={{ marginBottom: "20px" }}></span>
+
+      <Row className="mt-auto mb-5">
+        <Col sm={6}>
+          <Link
+            title="MCP tools with HTTP request binding"
+            href="/learn/by-example/mcp-service-http-request-binding/"
+          >
+            <div className="btnContainer d-flex align-items-center me-auto">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="#3ad1ca"
+                className={`${
+                  btnHover[0] ? "btnArrowHover" : "btnArrow"
+                } bi bi-arrow-right`}
+                viewBox="0 0 16 16"
+                onMouseEnter={() => updateBtnHover([true, false])}
+                onMouseOut={() => updateBtnHover([false, false])}
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"
+                />
+              </svg>
+              <div className="d-flex flex-column ms-4">
+                <span className="btnPrev">Previous</span>
+                <span
+                  className={btnHover[0] ? "btnTitleHover" : "btnTitle"}
+                  onMouseEnter={() => updateBtnHover([true, false])}
+                  onMouseOut={() => updateBtnHover([false, false])}
+                >
+                  MCP tools with HTTP request binding
+                </span>
+              </div>
+            </div>
+          </Link>
+        </Col>
+        <Col sm={6}>
+          <Link
+            title="Agent with local tools"
+            href="/learn/by-example/ai-agent-local-tools/"
+          >
+            <div className="btnContainer d-flex align-items-center ms-auto">
+              <div className="d-flex flex-column me-4">
+                <span className="btnNext">Next</span>
+                <span
+                  className={btnHover[1] ? "btnTitleHover" : "btnTitle"}
+                  onMouseEnter={() => updateBtnHover([false, true])}
+                  onMouseOut={() => updateBtnHover([false, false])}
+                >
+                  Agent with local tools
+                </span>
+              </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="#3ad1ca"
+                className={`${
+                  btnHover[1] ? "btnArrowHover" : "btnArrow"
+                } bi bi-arrow-right`}
+                viewBox="0 0 16 16"
+                onMouseEnter={() => updateBtnHover([false, true])}
+                onMouseOut={() => updateBtnHover([false, false])}
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"
+                />
+              </svg>
+            </div>
+          </Link>
+        </Col>
+      </Row>
+    </Container>
+  );
+}

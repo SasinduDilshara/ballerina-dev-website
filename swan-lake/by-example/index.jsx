@@ -2204,6 +2204,14 @@ import {
   codeSnippetData as DirectLlmCallsWithMultimodalInputCodeSnippetData,
 } from "./direct-llm-calls-with-multimodal-input/content.jsx";
 import {
+  DirectLlmCallsWithModelProvider,
+  codeSnippetData as DirectLlmCallsWithModelProviderCodeSnippetData,
+} from "./direct-llm-calls-with-model-provider/content.jsx";
+import {
+  DirectLlmCallsWithOllama,
+  codeSnippetData as DirectLlmCallsWithOllamaCodeSnippetData,
+} from "./direct-llm-calls-with-ollama/content.jsx";
+import {
   RagWithInMemoryVectorStore,
   codeSnippetData as RagWithInMemoryVectorStoreCodeSnippetData,
 } from "./rag-with-in-memory-vector-store/content.jsx";
@@ -2216,6 +2224,30 @@ import {
   codeSnippetData as RagQueryWithExternalVectorStoreCodeSnippetData,
 } from "./rag-query-with-external-vector-store/content.jsx";
 import {
+  RagDocumentLoading,
+  codeSnippetData as RagDocumentLoadingCodeSnippetData,
+} from "./rag-document-loading/content.jsx";
+import {
+  RagDocumentChunking,
+  codeSnippetData as RagDocumentChunkingCodeSnippetData,
+} from "./rag-document-chunking/content.jsx";
+import {
+  RagEmbeddingProvider,
+  codeSnippetData as RagEmbeddingProviderCodeSnippetData,
+} from "./rag-embedding-provider/content.jsx";
+import {
+  RagWithPgvectorVectorStore,
+  codeSnippetData as RagWithPgvectorVectorStoreCodeSnippetData,
+} from "./rag-with-pgvector-vector-store/content.jsx";
+import {
+  RagQueryWithMetadataFilters,
+  codeSnippetData as RagQueryWithMetadataFiltersCodeSnippetData,
+} from "./rag-query-with-metadata-filters/content.jsx";
+import {
+  RagCustomKnowledgeBase,
+  codeSnippetData as RagCustomKnowledgeBaseCodeSnippetData,
+} from "./rag-custom-knowledge-base/content.jsx";
+import {
   McpService,
   codeSnippetData as McpServiceCodeSnippetData,
 } from "./mcp-service/content.jsx";
@@ -2223,6 +2255,22 @@ import {
   McpServiceAdvanced,
   codeSnippetData as McpServiceAdvancedCodeSnippetData,
 } from "./mcp-service-advanced/content.jsx";
+import {
+  McpClient,
+  codeSnippetData as McpClientCodeSnippetData,
+} from "./mcp-client/content.jsx";
+import {
+  McpServiceWithSessions,
+  codeSnippetData as McpServiceWithSessionsCodeSnippetData,
+} from "./mcp-service-with-sessions/content.jsx";
+import {
+  McpServiceHttpRequestBinding,
+  codeSnippetData as McpServiceHttpRequestBindingCodeSnippetData,
+} from "./mcp-service-http-request-binding/content.jsx";
+import {
+  McpServiceSecurity,
+  codeSnippetData as McpServiceSecurityCodeSnippetData,
+} from "./mcp-service-security/content.jsx";
 import {
   AiAgentLocalTools,
   codeSnippetData as AiAgentLocalToolsCodeSnippetData,
@@ -2244,9 +2292,53 @@ import {
   codeSnippetData as AiAgentToolKitCodeSnippetData,
 } from "./ai-agent-tool-kit/content.jsx";
 import {
+  AiAgentMemory,
+  codeSnippetData as AiAgentMemoryCodeSnippetData,
+} from "./ai-agent-memory/content.jsx";
+import {
+  AiAgentPersistentMemory,
+  codeSnippetData as AiAgentPersistentMemoryCodeSnippetData,
+} from "./ai-agent-persistent-memory/content.jsx";
+import {
+  AiAgentMemoryOverflowHandling,
+  codeSnippetData as AiAgentMemoryOverflowHandlingCodeSnippetData,
+} from "./ai-agent-memory-overflow-handling/content.jsx";
+import {
+  AiAgentHumanInTheLoop,
+  codeSnippetData as AiAgentHumanInTheLoopCodeSnippetData,
+} from "./ai-agent-human-in-the-loop/content.jsx";
+import {
+  AiAgentTypedInputOutput,
+  codeSnippetData as AiAgentTypedInputOutputCodeSnippetData,
+} from "./ai-agent-typed-input-output/content.jsx";
+import {
+  AiAgentToolLoadingStrategy,
+  codeSnippetData as AiAgentToolLoadingStrategyCodeSnippetData,
+} from "./ai-agent-tool-loading-strategy/content.jsx";
+import {
+  AiChatClient,
+  codeSnippetData as AiChatClientCodeSnippetData,
+} from "./ai-chat-client/content.jsx";
+import {
+  AiAgentExecutionTrace,
+  codeSnippetData as AiAgentExecutionTraceCodeSnippetData,
+} from "./ai-agent-execution-trace/content.jsx";
+import {
+  AiAgentEvaluation,
+  codeSnippetData as AiAgentEvaluationCodeSnippetData,
+} from "./ai-agent-evaluation/content.jsx";
+import {
   NaturalExpressions,
   codeSnippetData as NaturalExpressionsCodeSnippetData,
 } from "./natural-expressions/content.jsx";
+import {
+  NaturalExpressionsWithModelProvider,
+  codeSnippetData as NaturalExpressionsWithModelProviderCodeSnippetData,
+} from "./natural-expressions-with-model-provider/content.jsx";
+import {
+  NaturalFunctions,
+  codeSnippetData as NaturalFunctionsCodeSnippetData,
+} from "./natural-functions/content.jsx";
 import {
   DockerHelloWorld,
   codeSnippetData as DockerHelloWorldCodeSnippetData,
@@ -3437,16 +3529,40 @@ const BBEs = {
   DirectLlmCallsWithHistoryCodeSnippetData,
   DirectLlmCallsWithMultimodalInput,
   DirectLlmCallsWithMultimodalInputCodeSnippetData,
+  DirectLlmCallsWithModelProvider,
+  DirectLlmCallsWithModelProviderCodeSnippetData,
+  DirectLlmCallsWithOllama,
+  DirectLlmCallsWithOllamaCodeSnippetData,
   RagWithInMemoryVectorStore,
   RagWithInMemoryVectorStoreCodeSnippetData,
   RagIngestionWithExternalVectorStore,
   RagIngestionWithExternalVectorStoreCodeSnippetData,
   RagQueryWithExternalVectorStore,
   RagQueryWithExternalVectorStoreCodeSnippetData,
+  RagDocumentLoading,
+  RagDocumentLoadingCodeSnippetData,
+  RagDocumentChunking,
+  RagDocumentChunkingCodeSnippetData,
+  RagEmbeddingProvider,
+  RagEmbeddingProviderCodeSnippetData,
+  RagWithPgvectorVectorStore,
+  RagWithPgvectorVectorStoreCodeSnippetData,
+  RagQueryWithMetadataFilters,
+  RagQueryWithMetadataFiltersCodeSnippetData,
+  RagCustomKnowledgeBase,
+  RagCustomKnowledgeBaseCodeSnippetData,
   McpService,
   McpServiceCodeSnippetData,
   McpServiceAdvanced,
   McpServiceAdvancedCodeSnippetData,
+  McpClient,
+  McpClientCodeSnippetData,
+  McpServiceWithSessions,
+  McpServiceWithSessionsCodeSnippetData,
+  McpServiceHttpRequestBinding,
+  McpServiceHttpRequestBindingCodeSnippetData,
+  McpServiceSecurity,
+  McpServiceSecurityCodeSnippetData,
   AiAgentLocalTools,
   AiAgentLocalToolsCodeSnippetData,
   AiAgentMcpIntegration,
@@ -3457,8 +3573,30 @@ const BBEs = {
   ChatAgentsCodeSnippetData,
   AiAgentToolKit,
   AiAgentToolKitCodeSnippetData,
+  AiAgentMemory,
+  AiAgentMemoryCodeSnippetData,
+  AiAgentPersistentMemory,
+  AiAgentPersistentMemoryCodeSnippetData,
+  AiAgentMemoryOverflowHandling,
+  AiAgentMemoryOverflowHandlingCodeSnippetData,
+  AiAgentHumanInTheLoop,
+  AiAgentHumanInTheLoopCodeSnippetData,
+  AiAgentTypedInputOutput,
+  AiAgentTypedInputOutputCodeSnippetData,
+  AiAgentToolLoadingStrategy,
+  AiAgentToolLoadingStrategyCodeSnippetData,
+  AiChatClient,
+  AiChatClientCodeSnippetData,
+  AiAgentExecutionTrace,
+  AiAgentExecutionTraceCodeSnippetData,
+  AiAgentEvaluation,
+  AiAgentEvaluationCodeSnippetData,
   NaturalExpressions,
   NaturalExpressionsCodeSnippetData,
+  NaturalExpressionsWithModelProvider,
+  NaturalExpressionsWithModelProviderCodeSnippetData,
+  NaturalFunctions,
+  NaturalFunctionsCodeSnippetData,
   DockerHelloWorld,
   DockerHelloWorldCodeSnippetData,
   KubernetesHelloWorld,

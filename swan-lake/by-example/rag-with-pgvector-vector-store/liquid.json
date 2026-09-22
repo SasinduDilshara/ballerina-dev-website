@@ -1,0 +1,17 @@
+{
+  "title": "RAG with pgvector vector store",
+  "description": "This BBE demonstrates retrieval-augmented generation (RAG) using the pgvector vector store.",
+  "keywords": [
+    "ballerina",
+    "ballerina by example",
+    "BBE",
+    "ai",
+    "llm",
+    "rag",
+    "vector store",
+    "pgvector",
+    "postgresql"
+  ],
+  "permalink": "/learn/by-example/rag-with-pgvector-vector-store/",
+  "active": "rag-with-pgvector-vector-store"
+}

@@ -148,7 +148,7 @@ export function AiAgentToolKit({ codeSnippets }) {
             className="bg-transparent border-0 m-0 p-2 ms-auto"
             onClick={() => {
               window.open(
-                "https://github.com/ballerina-platform/ballerina-distribution/tree/v2201.13.5/examples/ai-agent-tool-kit",
+                "https://github.com/ballerina-platform/ballerina-distribution/tree/v2201.13.6/examples/ai-agent-tool-kit",
                 "_blank",
               );
             }}
@@ -431,8 +431,8 @@ export function AiAgentToolKit({ codeSnippets }) {
         </Col>
         <Col sm={6}>
           <Link
-            title="Natural expressions"
-            href="/learn/by-example/natural-expressions/"
+            title="Agent with memory"
+            href="/learn/by-example/ai-agent-memory/"
           >
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
@@ -442,7 +442,7 @@ export function AiAgentToolKit({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Natural expressions
+                  Agent with memory
                 </span>
               </div>
               <svg

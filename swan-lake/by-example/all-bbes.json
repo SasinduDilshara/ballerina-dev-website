@@ -4835,6 +4835,56 @@
     ]
   },
   {
+    "title": "SMB service",
+    "column": 3,
+    "category": "Network libraries",
+    "samples": [
+      {
+        "name": "Receive file",
+        "url": "smb-service-receive-file",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disablePlayground": true,
+        "isLearnByExample": false,
+        "needCentral": true
+      },
+      {
+        "name": "Caller object",
+        "url": "smb-caller",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disablePlayground": true,
+        "isLearnByExample": false,
+        "needCentral": true
+      }
+    ]
+  },
+  {
+    "title": "SMB client",
+    "column": 3,
+    "category": "Network libraries",
+    "samples": [
+      {
+        "name": "Write file",
+        "url": "smb-client-write-file",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disablePlayground": true,
+        "isLearnByExample": false,
+        "needCentral": true
+      },
+      {
+        "name": "Read file",
+        "url": "smb-client-read-file",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disablePlayground": true,
+        "isLearnByExample": false,
+        "needCentral": true
+      }
+    ]
+  },
+  {
     "title": "Database access",
     "column": 3,
     "category": "Network libraries",
@@ -5199,6 +5249,15 @@
         "needCentral": false
       },
       {
+        "name": "Log file rotation",
+        "url": "log-file-rotation",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Includes varying output and file creation",
+        "disablePlayground": true,
+        "isLearnByExample": false
+      },
+      {
         "name": "Child loggers with context",
         "url": "child-loggers-with-context",
         "verifyBuild": true,
@@ -5419,6 +5478,43 @@
         "verifyOutput": true,
         "isLearnByExample": false,
         "needCentral": false
+      }
+    ]
+  },
+  {
+    "title": "Zip",
+    "column": 2,
+    "category": "Common libraries",
+    "samples": [
+      {
+        "name": "Create a ZIP archive",
+        "url": "zip-compress",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Needs prerequisite condition",
+        "disablePlayground": true,
+        "isLearnByExample": false,
+        "needCentral": true
+      },
+      {
+        "name": "Extract a ZIP archive",
+        "url": "zip-decompress",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Needs prerequisite condition",
+        "disablePlayground": true,
+        "isLearnByExample": false,
+        "needCentral": true
+      },
+      {
+        "name": "Unpack an untrusted archive",
+        "url": "zip-decompress-untrusted",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Needs prerequisite condition",
+        "disablePlayground": true,
+        "isLearnByExample": false,
+        "needCentral": true
       }
     ]
   },
@@ -5688,6 +5784,24 @@
         "disableVerificationReason": "Requires keys and the output is not fixed",
         "disablePlayground": true,
         "needCentral": false
+      },
+      {
+        "name": "Direct LLM calls with a specific model provider",
+        "url": "direct-llm-calls-with-model-provider",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires keys and the output is not fixed",
+        "disablePlayground": true,
+        "needCentral": true
+      },
+      {
+        "name": "Direct LLM calls with a local model using Ollama",
+        "url": "direct-llm-calls-with-ollama",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires a local Ollama server and the output is not fixed",
+        "disablePlayground": true,
+        "needCentral": true
       }
     ]
   },
@@ -5722,6 +5836,59 @@
         "disableVerificationReason": "Requires keys and the output is not fixed",
         "disablePlayground": true,
         "needCentral": true
+      },
+      {
+        "name": "Document loading",
+        "url": "rag-document-loading",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Depends on the sample documents",
+        "disablePlayground": true,
+        "needCentral": false
+      },
+      {
+        "name": "Document chunking",
+        "url": "rag-document-chunking",
+        "verifyBuild": true,
+        "verifyOutput": true,
+        "disablePlayground": true,
+        "needCentral": false
+      },
+      {
+        "name": "Embeddings with a specific embedding provider",
+        "url": "rag-embedding-provider",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires keys and the output is not fixed",
+        "disablePlayground": true,
+        "needCentral": true
+      },
+      {
+        "name": "RAG with pgvector vector store",
+        "url": "rag-with-pgvector-vector-store",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires keys and a PostgreSQL database",
+        "disablePlayground": true,
+        "needCentral": true
+      },
+      {
+        "name": "Vector search with metadata filters",
+        "url": "rag-query-with-metadata-filters",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires keys and the output is not fixed",
+        "disablePlayground": true,
+        "needCentral": false
+      },
+      {
+        "name": "Custom knowledge base",
+        "url": "rag-custom-knowledge-base",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires keys and the output is not fixed",
+        "disablePlayground": true,
+        "needCentral": false
       }
     ]
   },
@@ -5743,6 +5910,42 @@
         "verifyBuild": true,
         "verifyOutput": false,
         "disablePlayground": true
+      },
+      {
+        "name": "MCP client",
+        "url": "mcp-client",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires the MCP service to be running",
+        "disablePlayground": true,
+        "needCentral": false
+      },
+      {
+        "name": "MCP service with sessions",
+        "url": "mcp-service-with-sessions",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Long-running service",
+        "disablePlayground": true,
+        "needCentral": false
+      },
+      {
+        "name": "MCP tools with HTTP request binding",
+        "url": "mcp-service-http-request-binding",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Long-running service",
+        "disablePlayground": true,
+        "needCentral": false
+      },
+      {
+        "name": "MCP service security",
+        "url": "mcp-service-security",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Long-running service with TLS resources",
+        "disablePlayground": true,
+        "needCentral": false
       }
     ]
   },
@@ -5795,6 +5998,87 @@
         "disableVerificationReason": "Requires keys and the output is not fixed",
         "disablePlayground": true,
         "needCentral": false
+      },
+      {
+        "name": "Agent with memory",
+        "url": "ai-agent-memory",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires keys and the output is not fixed",
+        "disablePlayground": true,
+        "needCentral": false
+      },
+      {
+        "name": "Agent with persistent memory",
+        "url": "ai-agent-persistent-memory",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires keys and the output is not fixed",
+        "disablePlayground": true,
+        "needCentral": true
+      },
+      {
+        "name": "Memory overflow handling",
+        "url": "ai-agent-memory-overflow-handling",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires keys and the output is not fixed",
+        "disablePlayground": true,
+        "needCentral": false
+      },
+      {
+        "name": "Human-in-the-loop tool approval",
+        "url": "ai-agent-human-in-the-loop",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires keys and user input",
+        "disablePlayground": true,
+        "needCentral": false
+      },
+      {
+        "name": "Agent with typed input and output",
+        "url": "ai-agent-typed-input-output",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires keys and the output is not fixed",
+        "disablePlayground": true,
+        "needCentral": false
+      },
+      {
+        "name": "Agent tool loading strategy",
+        "url": "ai-agent-tool-loading-strategy",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires keys and the output is not fixed",
+        "disablePlayground": true,
+        "needCentral": false
+      },
+      {
+        "name": "Chat client",
+        "url": "ai-chat-client",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires the chat agent service to be running",
+        "disablePlayground": true,
+        "needCentral": false
+      },
+      {
+        "name": "Agent execution trace",
+        "url": "ai-agent-execution-trace",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires keys and the output is not fixed",
+        "disablePlayground": true,
+        "needCentral": false
+      },
+      {
+        "name": "Agent evaluation",
+        "url": "ai-agent-evaluation",
+        "verifyBuild": false,
+        "verifyOutput": false,
+        "disableVerificationReason": "Test file; has different naming convention and requires keys",
+        "disablePlayground": true,
+        "needCentral": true
       }
     ]
   },
@@ -5809,6 +6093,24 @@
         "verifyBuild": true,
         "verifyOutput": false,
         "disableVerificationReason": "Requires keys",
+        "disablePlayground": true,
+        "needCentral": false
+      },
+      {
+        "name": "Natural expressions with a specific model provider",
+        "url": "natural-expressions-with-model-provider",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires keys and the output is not fixed",
+        "disablePlayground": true,
+        "needCentral": true
+      },
+      {
+        "name": "Natural functions",
+        "url": "natural-functions",
+        "verifyBuild": true,
+        "verifyOutput": false,
+        "disableVerificationReason": "Requires keys and the output is not fixed",
         "disablePlayground": true,
         "needCentral": false
       }

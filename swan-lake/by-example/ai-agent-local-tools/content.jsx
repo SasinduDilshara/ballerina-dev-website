@@ -139,7 +139,7 @@ export function AiAgentLocalTools({ codeSnippets }) {
             className="bg-transparent border-0 m-0 p-2 ms-auto"
             onClick={() => {
               window.open(
-                "https://github.com/ballerina-platform/ballerina-distribution/tree/v2201.13.5/examples/ai-agent-local-tools",
+                "https://github.com/ballerina-platform/ballerina-distribution/tree/v2201.13.6/examples/ai-agent-local-tools",
                 "_blank",
               );
             }}
@@ -396,8 +396,8 @@ export function AiAgentLocalTools({ codeSnippets }) {
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="MCP advanced service"
-            href="/learn/by-example/mcp-service-advanced/"
+            title="MCP service security"
+            href="/learn/by-example/mcp-service-security/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
@@ -424,7 +424,7 @@ export function AiAgentLocalTools({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  MCP advanced service
+                  MCP service security
                 </span>
               </div>
             </div>

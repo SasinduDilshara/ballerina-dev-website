@@ -1,0 +1,394 @@
+import React, { useState, createRef } from "react";
+import { Container, Row, Col } from "react-bootstrap";
+import DOMPurify from "dompurify";
+import { copyToClipboard, extractOutput } from "../../../utils/bbe";
+import Link from "next/link";
+
+export const codeSnippetData = [
+  `import ballerina/ai;
+import ballerina/io;
+
+type Order record {|
+    string id;
+    decimal total;
+    string status;
+|};
+
+isolated map<Order> orders = {
+    "ORD-1001": {id: "ORD-1001", total: 120.50, status: "delivered"}
+};
+
+# Gets the details of an order.
+# + orderId - The order ID
+# + return - The order details, or an error if the order is not found
+@ai:AgentTool
+isolated function getOrder(string orderId) returns Order|error {
+    lock {
+        Order? 'order = orders[orderId];
+        if 'order is () {
+            return error("Order not found: " + orderId);
+        }
+        return 'order.clone();
+    }
+}
+
+# Issues a refund for an order. This action is irreversible.
+# + orderId - The order ID
+# + amount - The amount to refund
+# + return - A confirmation message, or an error if the order is not found
+// Mark the tool as requiring human approval. The agent pauses before calling this tool
+// and resumes only after a human approves or rejects the proposed call.
+@ai:AgentTool {requiresApproval: true}
+isolated function issueRefund(string orderId, decimal amount) returns string|error {
+    lock {
+        Order? 'order = orders[orderId];
+        if 'order is () {
+            return error("Order not found: " + orderId);
+        }
+        'order.status = "refunded";
+    }
+    return string \`A refund of \${amount} has been issued for order \${orderId}\`;
+}
+
+final ai:Agent supportAgent = check new ({
+    systemPrompt: {
+        role: "Customer Support Agent",
+        instructions: string \`You help customers with their orders. Look up orders and
+            issue refunds when asked. Keep answers brief.\`
+    },
+    // Use the default model provider (with configuration added via a Ballerina VS Code command).
+    model: check ai:getDefaultModelProvider(),
+    tools: [getOrder, issueRefund]
+});
+
+public function main() returns error? {
+    string sessionId = "customer-7";
+    string|ai:Error result = supportAgent.run("Please refund my order ORD-1001 in full.", sessionId);
+
+    // When the agent proposes a call to a tool that requires approval, the run pauses and
+    // returns an \`ai:ApprovalRequiredError\` that describes the pending tool call(s).
+    if result is ai:ApprovalRequiredError {
+        map<ai:HumanDecision> decisions = {};
+        foreach ai:ApprovalRequest request in result.detail().requests {
+            io:println(string \`Approval required to call '\${request.toolName}' with arguments \${
+                    request.arguments.toJsonString()}\`);
+            // A human reviews the proposed call. Here, the decision is read from the console.
+            string answer = io:readln("Approve? (y/n): ");
+            decisions[request.id] = answer.toLowerAscii() == "y" ?
+                    {outcome: ai:APPROVE} :
+                    {outcome: ai:REJECT, reason: "Rejected by the support supervisor"};
+        }
+
+        // Resume the paused run with the decisions, using the same session ID. The agent
+        // executes the approved tool calls, learns about the rejected ones, and continues
+        // to produce the final response.
+        ai:Resume resume = {decisions: decisions.cloneReadOnly()};
+        string response = check supportAgent.run(resume, sessionId);
+        io:println("Agent: ", response);
+    } else {
+        io:println("Agent: ", check result);
+    }
+}
+`,
+];
+
+export function AiAgentHumanInTheLoop({ codeSnippets }) {
+  const [codeClick1, updateCodeClick1] = useState(false);
+
+  const [outputClick1, updateOutputClick1] = useState(false);
+  const ref1 = createRef();
+
+  const [btnHover, updateBtnHover] = useState([false, false]);
+
+  return (
+    <Container className="bbeBody d-flex flex-column h-100">
+      <h1>Human-in-the-loop tool approval</h1>
+
+      <p>
+        Some tool calls have consequences that should not be left to the LLM
+        alone, such as issuing refunds, sending messages, or deleting data.
+        Ballerina agents support human-in-the-loop approval for such tools. A
+        tool is marked as requiring approval via the{" "}
+        <code>requiresApproval</code> field of the <code>@ai:AgentTool</code>{" "}
+        annotation (or <code>ai:ToolConfig</code>). The value can be{" "}
+        <code>true</code> to always require approval, or an{" "}
+        <code>isolated</code> function with the same parameters as the tool that
+        decides per call based on the proposed arguments.
+      </p>
+
+      <p>
+        When the agent proposes a call to such a tool, the run pauses and
+        returns an <code>ai:ApprovalRequiredError</code> that carries one{" "}
+        <code>ai:ApprovalRequest</code> per pending call, including the tool
+        name and the proposed arguments. A human (or an approval workflow)
+        reviews the requests, and the run is resumed by calling <code>run</code>{" "}
+        with an <code>ai:Resume</code> value that maps each request ID to an{" "}
+        <code>ai:HumanDecision</code> (approve or reject, with an optional
+        reason), using the same session ID. The paused state is checkpointed in
+        the agent’s memory store, so with a persistent store the run can be
+        resumed after a restart or from a different process.
+      </p>
+
+      <p>
+        This example demonstrates a customer support agent whose refund tool
+        requires approval, with the decision read from the console.
+      </p>
+
+      <blockquote>
+        <p>
+          Note: This example uses the default model provider implementation. To
+          generate the necessary configuration, open up the VS Code command
+          palette (<code>Ctrl</code> + <code>Shift</code> + <code>P</code> or{" "}
+          <code>command</code> + <code>shift</code> + <code>P</code>), and run
+          the <code>Configure default WSO2 Model Provider</code> command to add
+          your configuration to the <code>Config.toml</code> file. If not
+          already logged in, log in to the Ballerina Copilot when prompted.
+          Alternatively, to use your own keys, use the relevant{" "}
+          <code>ballerinax/ai.&lt;provider&gt;</code> model provider
+          implementation.
+        </p>
+      </blockquote>
+
+      <p>
+        For more information on the underlying module, see the{" "}
+        <a href="https://lib.ballerina.io/ballerina/ai/latest/">
+          <code>ballerina/ai</code> module
+        </a>
+        .
+      </p>
+
+      <Row
+        className="bbeCode mx-0 py-0 rounded 
+      "
+        style={{ marginLeft: "0px" }}
+      >
+        <Col className="d-flex align-items-start" sm={12}>
+          {codeClick1 ? (
+            <button
+              className="bg-transparent border-0 m-0 p-2  ms-auto"
+              disabled
+              aria-label="Copy to Clipboard Check"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#20b6b0"
+                className="bi bi-check"
+                viewBox="0 0 16 16"
+              >
+                <title>Copied</title>
+                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              className="bg-transparent border-0 m-0 p-2  ms-auto"
+              onClick={() => {
+                updateCodeClick1(true);
+                copyToClipboard(codeSnippetData[0]);
+                setTimeout(() => {
+                  updateCodeClick1(false);
+                }, 3000);
+              }}
+              aria-label="Copy to Clipboard"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#000"
+                className="bi bi-clipboard"
+                viewBox="0 0 16 16"
+              >
+                <title>Copy to Clipboard</title>
+                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+              </svg>
+            </button>
+          )}
+        </Col>
+        <Col sm={12}>
+          {codeSnippets[0] != undefined && (
+            <div
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(codeSnippets[0]),
+              }}
+            />
+          )}
+        </Col>
+      </Row>
+
+      <Row
+        className="bbeOutput mx-0 py-0 rounded "
+        style={{ marginLeft: "0px" }}
+      >
+        <Col sm={12} className="d-flex align-items-start">
+          {outputClick1 ? (
+            <button
+              className="bg-transparent border-0 m-0 p-2 ms-auto"
+              aria-label="Copy to Clipboard Check"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#20b6b0"
+                className="output-btn bi bi-check"
+                viewBox="0 0 16 16"
+              >
+                <title>Copied</title>
+                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              className="bg-transparent border-0 m-0 p-2 ms-auto"
+              onClick={() => {
+                updateOutputClick1(true);
+                const extractedText = extractOutput(ref1.current.innerText);
+                copyToClipboard(extractedText);
+                setTimeout(() => {
+                  updateOutputClick1(false);
+                }, 3000);
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="#EEEEEE"
+                className="output-btn bi bi-clipboard"
+                viewBox="0 0 16 16"
+                aria-label="Copy to Clipboard"
+              >
+                <title>Copy to Clipboard</title>
+                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+              </svg>
+            </button>
+          )}
+        </Col>
+        <Col sm={12}>
+          <pre ref={ref1}>
+            <code className="d-flex flex-column">
+              <span>{`\$ bal run ai_agent_human_in_the_loop.bal`}</span>
+              <span>{`Approval required to call 'issueRefund' with arguments {"amount":120.5, "orderId":"ORD-1001"}`}</span>
+              <span>{`Approve? (y/n): y`}</span>
+              <span>{`Agent: A full refund of \$120.50 has been issued for your order ORD-1001.`}</span>
+            </code>
+          </pre>
+        </Col>
+      </Row>
+
+      <h2>Related links</h2>
+
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="/learn/by-example/ai-agent-local-tools/">
+              The Agent with local tools example
+            </a>
+          </span>
+        </li>
+      </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="/learn/by-example/ai-agent-persistent-memory/">
+              The Agent with persistent memory example
+            </a>
+          </span>
+        </li>
+      </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="/learn/by-example/ai-chat-client/">
+              The Chat client example
+            </a>
+          </span>
+        </li>
+      </ul>
+      <span style={{ marginBottom: "20px" }}></span>
+
+      <Row className="mt-auto mb-5">
+        <Col sm={6}>
+          <Link
+            title="Memory overflow handling"
+            href="/learn/by-example/ai-agent-memory-overflow-handling/"
+          >
+            <div className="btnContainer d-flex align-items-center me-auto">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="#3ad1ca"
+                className={`${
+                  btnHover[0] ? "btnArrowHover" : "btnArrow"
+                } bi bi-arrow-right`}
+                viewBox="0 0 16 16"
+                onMouseEnter={() => updateBtnHover([true, false])}
+                onMouseOut={() => updateBtnHover([false, false])}
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"
+                />
+              </svg>
+              <div className="d-flex flex-column ms-4">
+                <span className="btnPrev">Previous</span>
+                <span
+                  className={btnHover[0] ? "btnTitleHover" : "btnTitle"}
+                  onMouseEnter={() => updateBtnHover([true, false])}
+                  onMouseOut={() => updateBtnHover([false, false])}
+                >
+                  Memory overflow handling
+                </span>
+              </div>
+            </div>
+          </Link>
+        </Col>
+        <Col sm={6}>
+          <Link
+            title="Agent with typed input and output"
+            href="/learn/by-example/ai-agent-typed-input-output/"
+          >
+            <div className="btnContainer d-flex align-items-center ms-auto">
+              <div className="d-flex flex-column me-4">
+                <span className="btnNext">Next</span>
+                <span
+                  className={btnHover[1] ? "btnTitleHover" : "btnTitle"}
+                  onMouseEnter={() => updateBtnHover([false, true])}
+                  onMouseOut={() => updateBtnHover([false, false])}
+                >
+                  Agent with typed input and output
+                </span>
+              </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="#3ad1ca"
+                className={`${
+                  btnHover[1] ? "btnArrowHover" : "btnArrow"
+                } bi bi-arrow-right`}
+                viewBox="0 0 16 16"
+                onMouseEnter={() => updateBtnHover([false, true])}
+                onMouseOut={() => updateBtnHover([false, false])}
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"
+                />
+              </svg>
+            </div>
+          </Link>
+        </Col>
+      </Row>
+    </Container>
+  );
+}
