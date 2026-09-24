@@ -1,5 +1,5 @@
 {
-  "title": "Document chunking",
+  "title": "Chunk documents",
   "description": "This BBE demonstrates how to chunk documents for retrieval-augmented generation (RAG).",
   "keywords": [
     "ballerina",

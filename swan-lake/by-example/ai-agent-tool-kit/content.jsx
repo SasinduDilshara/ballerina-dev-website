@@ -431,7 +431,7 @@ export function AiAgentToolKit({ codeSnippets }) {
         </Col>
         <Col sm={6}>
           <Link
-            title="Agent with memory"
+            title="Agent with in-memory short-term memory"
             href="/learn/by-example/ai-agent-memory/"
           >
             <div className="btnContainer d-flex align-items-center ms-auto">
@@ -442,7 +442,7 @@ export function AiAgentToolKit({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Agent with memory
+                  Agent with in-memory short-term memory
                 </span>
               </div>
               <svg

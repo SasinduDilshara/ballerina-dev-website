@@ -1,5 +1,5 @@
 {
-  "title": "Custom knowledge base",
+  "title": "Retrieve from a custom knowledge base",
   "description": "This BBE demonstrates how to implement a custom knowledge base for retrieval-augmented generation (RAG).",
   "keywords": [
     "ballerina",

@@ -50,7 +50,7 @@ export function RagDocumentLoading({ codeSnippets }) {
 
   return (
     <Container className="bbeBody d-flex flex-column h-100">
-      <h1>Document loading for retrieval-augmented generation (RAG)</h1>
+      <h1>Load documents for retrieval-augmented generation (RAG)</h1>
 
       <p>
         Loading source documents is the first step of a retrieval-augmented
@@ -252,7 +252,7 @@ export function RagDocumentLoading({ codeSnippets }) {
           <span>&#8226;&nbsp;</span>
           <span>
             <a href="/learn/by-example/rag-document-chunking/">
-              The Document chunking example
+              The Chunk documents example
             </a>
           </span>
         </li>
@@ -262,7 +262,7 @@ export function RagDocumentLoading({ codeSnippets }) {
           <span>&#8226;&nbsp;</span>
           <span>
             <a href="/learn/by-example/rag-ingestion-with-external-vector-store/">
-              The RAG ingestion with external vector store example
+              The Ingest into Pinecone example
             </a>
           </span>
         </li>
@@ -282,8 +282,8 @@ export function RagDocumentLoading({ codeSnippets }) {
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="RAG query with external vector store"
-            href="/learn/by-example/rag-query-with-external-vector-store/"
+            title="Deploy an agent from an AFM file"
+            href="/learn/by-example/ai-agent-from-afm/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
@@ -310,7 +310,7 @@ export function RagDocumentLoading({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  RAG query with external vector store
+                  Deploy an agent from an AFM file
                 </span>
               </div>
             </div>
@@ -318,8 +318,8 @@ export function RagDocumentLoading({ codeSnippets }) {
         </Col>
         <Col sm={6}>
           <Link
-            title="Document chunking"
-            href="/learn/by-example/rag-document-chunking/"
+            title="Load documents from multiple sources"
+            href="/learn/by-example/rag-document-sources/"
           >
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
@@ -329,7 +329,7 @@ export function RagDocumentLoading({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Document chunking
+                  Load documents from multiple sources
                 </span>
               </div>
               <svg

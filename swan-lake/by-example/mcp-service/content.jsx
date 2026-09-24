@@ -36,7 +36,7 @@ type WeatherForecast record {|
 // Define an MCP service attached to the MCP Streamable HTTP listener on port 9090.
 listener mcp:StreamableHttpListener mcpListener = new (9090);
 
-service mcp:Service /mcp on mcpListener {
+service mcp:StreamableHttpService /mcp on mcpListener {
 
     // The remote methods defined in this service become MCP tools.
     // The MCP listener handles listing and calling the tools on MCP requests.
@@ -111,8 +111,9 @@ export function McpService({ codeSnippets }) {
 
       <p>
         Ballerina’s MCP library allows you to create MCP servers that expose
-        tools. Remote methods of a <code>mcp:Service</code> service declaration
-        automatically become MCP tools that AI assistants can discover and call.
+        tools over the Streamable HTTP transport. Remote methods of an{" "}
+        <code>mcp:StreamableHttpService</code> service declaration automatically
+        become MCP tools that AI assistants can discover and call.
       </p>
 
       <p>
@@ -289,8 +290,8 @@ export function McpService({ codeSnippets }) {
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="Custom knowledge base"
-            href="/learn/by-example/rag-custom-knowledge-base/"
+            title="Direct LLM calls with a local model using Ollama"
+            href="/learn/by-example/direct-llm-calls-with-ollama/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
@@ -317,7 +318,7 @@ export function McpService({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Custom knowledge base
+                  Direct LLM calls with a local model using Ollama
                 </span>
               </div>
             </div>

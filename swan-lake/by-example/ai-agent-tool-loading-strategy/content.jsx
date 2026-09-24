@@ -5,10 +5,34 @@ import { copyToClipboard, extractOutput } from "../../../utils/bbe";
 import Link from "next/link";
 
 export const codeSnippetData = [
-  `// A set of tools for an HR assistant. Each tool has a short description (from the doc comment),
-// which is what the LLM sees first when the \`ai:LLM_FILTER\` tool loading strategy is used.
-import ballerina/ai;
+  `import ballerina/ai;
 import ballerina/io;
+
+final ai:Agent hrAgent = check new ({
+    systemPrompt: {
+        role: "HR Assistant",
+        instructions: "You help employees with HR tasks using the available tools. Keep answers brief."
+    },
+    // Use the default model provider (with configuration added via a Ballerina VS Code command).
+    model: check ai:getDefaultModelProvider(),
+    tools: [getLeaveBalance, requestLeave, getPublicHolidays, getPayslip, updateBankAccount,
+            getTrainingCourses, enrollInCourse, getManager],
+    // With \`ai:NO_FILTER\` (the default), the schemas of all tools are sent to the LLM with every request.
+    // With \`ai:LLM_FILTER\`, only the tool names and descriptions are sent first; the LLM selects
+    // the tools relevant to the query, and only their full schemas are then loaded. This reduces the
+    // prompt size for agents with many tools.
+    toolLoadingStrategy: ai:LLM_FILTER
+});
+
+public function main() returns error? {
+    string response = check hrAgent.run("How many leave days do I have left? My employee ID is E-1001.");
+    io:println(response);
+    response = check hrAgent.run("Enroll me (E-1001) in the Cloud Security course and tell me who my manager is.");
+    io:println(response);
+}
+
+// A set of tools for an HR assistant. Each tool has a short description (from the doc comment),
+// which is what the LLM sees first when the \`ai:LLM_FILTER\` tool loading strategy is used.
 
 # Gets the remaining annual leave balance of an employee.
 # + employeeId - The employee ID
@@ -64,29 +88,6 @@ isolated function enrollInCourse(string employeeId, string course) returns strin
 # + return - The name of the manager
 @ai:AgentTool
 isolated function getManager(string employeeId) returns string => "Jane Perera";
-
-final ai:Agent hrAgent = check new ({
-    systemPrompt: {
-        role: "HR Assistant",
-        instructions: "You help employees with HR tasks using the available tools. Keep answers brief."
-    },
-    // Use the default model provider (with configuration added via a Ballerina VS Code command).
-    model: check ai:getDefaultModelProvider(),
-    tools: [getLeaveBalance, requestLeave, getPublicHolidays, getPayslip, updateBankAccount,
-            getTrainingCourses, enrollInCourse, getManager],
-    // With \`ai:NO_FILTER\` (the default), the schemas of all tools are sent to the LLM with every request.
-    // With \`ai:LLM_FILTER\`, only the tool names and descriptions are sent first; the LLM selects
-    // the tools relevant to the query, and only their full schemas are then loaded. This reduces the
-    // prompt size for agents with many tools.
-    toolLoadingStrategy: ai:LLM_FILTER
-});
-
-public function main() returns error? {
-    string response = check hrAgent.run("How many leave days do I have left? My employee ID is E-1001.");
-    io:println(response);
-    response = check hrAgent.run("Enroll me (E-1001) in the Cloud Security course and tell me who my manager is.");
-    io:println(response);
-}
 `,
 ];
 

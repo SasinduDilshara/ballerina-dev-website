@@ -40,7 +40,7 @@ ai:ChatMessage[] messages = check memory.get("user-1");
 check memory.delete("user-1");
 ```
 
-See the [Agent with memory](/learn/by-example/ai-agent-memory/) example.
+See the [Agent with in-memory short-term memory](/learn/by-example/ai-agent-memory/) example.
 
 ## Persist the memory
 
@@ -52,6 +52,7 @@ The in-memory store is lost when the program stops and cannot be shared by sever
 | [`ballerinax/ai.memory.postgresql`](https://central.ballerina.io/ballerinax/ai.memory.postgresql/latest) | PostgreSQL |
 | [`ballerinax/ai.memory.redis`](https://central.ballerina.io/ballerinax/ai.memory.redis/latest) | Redis |
 | [`ballerinax/ai.memory.mssql`](https://central.ballerina.io/ballerinax/ai.memory.mssql/latest) | Microsoft SQL Server |
+| [`ballerinax/ai.aws.dynamodb`](https://central.ballerina.io/ballerinax/ai.aws.dynamodb/latest) | Amazon DynamoDB |
 
 ### SQLite
 
@@ -86,7 +87,7 @@ final postgresql:ShortTermMemoryStore store = check new ({
 final ai:Memory memory = check new ai:ShortTermMemory(store);
 ```
 
-The store constructor also accepts an existing `postgresql:Client`. The Redis and SQL Server stores follow the same pattern; see their module documentation for the connection configuration.
+The store constructor also accepts an existing `postgresql:Client`. The Redis, SQL Server, and DynamoDB stores follow the same pattern; see their module documentation for the connection configuration.
 
 With a persistent store, a program that is restarted continues the conversation where it left off, as demonstrated in the [Agent with persistent memory](/learn/by-example/ai-agent-persistent-memory/) example.
 
@@ -114,5 +115,5 @@ For other backends, implement the `ai:ShortTermMemoryStore` object type (message
 ## Learn more
 
 - [Build an AI agent](/learn/build-an-ai-agent/)
-- [Agent with memory](/learn/by-example/ai-agent-memory/), [Agent with persistent memory](/learn/by-example/ai-agent-persistent-memory/), and [Memory overflow handling](/learn/by-example/ai-agent-memory-overflow-handling/) examples
+- [Agent with in-memory short-term memory](/learn/by-example/ai-agent-memory/), [Agent with persistent memory](/learn/by-example/ai-agent-persistent-memory/), and [Memory overflow handling](/learn/by-example/ai-agent-memory-overflow-handling/) examples
 - [`ballerina/ai` module](https://central.ballerina.io/ballerina/ai/latest)

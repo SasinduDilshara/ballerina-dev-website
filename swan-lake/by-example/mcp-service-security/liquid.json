@@ -1,6 +1,6 @@
 {
   "title": "MCP service security",
-  "description": "This BBE demonstrates how to secure an MCP service with TLS and basic authentication.",
+  "description": "This BBE demonstrates how to secure an MCP service with TLS and JWT authentication.",
   "keywords": [
     "ballerina",
     "ballerina by example",
@@ -9,7 +9,7 @@
     "llm",
     "mcp",
     "security",
-    "basic auth"
+    "jwt"
   ],
   "permalink": "/learn/by-example/mcp-service-security/",
   "active": "mcp-service-security"

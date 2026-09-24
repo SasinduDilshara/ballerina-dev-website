@@ -20,12 +20,14 @@ To complete this guide, you need:
 
 ## Understand the implementation
 
-An agent (`ai:Agent`) runs a reasoning-action loop: it sends the conversation and the definitions of its tools to the LLM, executes the tool calls the LLM returns, feeds the results back, and repeats until the LLM produces a final answer. An agent is configured with:
+An agent (`ai:Agent`) runs a reasoning-action loop. It sends the conversation and the definitions of its tools to the LLM, executes the tool calls the LLM returns, feeds the results back, and repeats until the LLM produces a final answer.
 
-- a **system prompt** (`ai:SystemPrompt`) with the role and instructions,
-- a **model provider** (`ai:ModelProvider`),
-- **tools**: Ballerina functions annotated with `@ai:AgentTool`, tool kits (`ai:BaseToolKit` implementations), and MCP tool kits (`ai:McpToolKit`),
-- optional **memory**, the maximum number of iterations, and the tool loading strategy.
+An agent is configured with the following.
+
+- **System prompt** (`ai:SystemPrompt`): the role and instructions of the agent.
+- **Model provider** (`ai:ModelProvider`): the LLM used for reasoning.
+- **Tools**: Ballerina functions annotated with `@ai:AgentTool`, tool kits (`ai:BaseToolKit` implementations), and MCP tool kits (`ai:McpToolKit`).
+- **Optional settings**: memory, the maximum number of iterations, and the tool loading strategy.
 
 In this guide, you build a task assistant agent that manages a to-do list.
 

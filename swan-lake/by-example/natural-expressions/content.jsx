@@ -353,8 +353,8 @@ export function NaturalExpressions({ codeSnippets }) {
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="Agent evaluation"
-            href="/learn/by-example/ai-agent-evaluation/"
+            title="Agentic RAG with Pinecone"
+            href="/learn/by-example/agentic-rag-with-pinecone-vector-store/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
@@ -381,7 +381,7 @@ export function NaturalExpressions({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Agent evaluation
+                  Agentic RAG with Pinecone
                 </span>
               </div>
             </div>

@@ -8,53 +8,58 @@ export const codeSnippetData = [
   `import ballerina/ai;
 import ballerina/io;
 
-// Use the default model provider (with configuration added via a Ballerina VS Code command).
 final ai:ModelProvider model = check ai:getDefaultModelProvider();
 
-// Short-term memory retains a fixed number of messages per session. When the capacity is
-// reached, the overflow handler decides what happens to the oldest messages.
-// The default strategy trims the oldest messages. Here, the two oldest messages are trimmed
-// whenever adding a message would exceed the capacity of the store (6 messages).
-final ai:ShortTermMemory trimmingMemory = check new (check new ai:InMemoryShortTermMemoryStore(6),
-        <ai:TrimOverflowHandlerConfiguration>{trimCount: 2});
-
-// Alternatively, the model-assisted strategy uses an LLM to summarize the older messages
-// into a single message, so the context is retained in a condensed form instead of being lost.
-final ai:ShortTermMemory summarizingMemory = check new (check new ai:InMemoryShortTermMemoryStore(6),
+// Short-term memory retains a fixed number of messages per session. When adding a message
+// would exceed the capacity, the overflow handler decides what happens to the oldest messages:
+// - \`ai:TrimOverflowHandlerConfiguration\` (the default) removes the oldest messages,
+//   e.g., \`<ai:TrimOverflowHandlerConfiguration>{trimCount: 2}\`.
+// - \`ai:ModelAssistedOverflowHandlerConfiguration\` summarizes the older messages with an LLM
+//   into a single message, so their context is retained in condensed form.
+final ai:Memory memory = check new ai:ShortTermMemory(check new ai:InMemoryShortTermMemoryStore(6),
         <ai:ModelAssistedOverflowHandlerConfiguration>{model});
 
-final string[] userMessages = [
-    "My name is Nadia and I live in Lisbon.",
-    "I have a cat called Milo.",
-    "I work as a marine biologist.",
-    "What do you know about me? Answer in one sentence."
-];
-
-function runConversation(ai:Memory memory, string sessionId) returns error? {
-    ai:Agent agent = check new ({
-        systemPrompt: {
-            role: "Personal Assistant",
-            instructions: "You are a friendly assistant. Keep answers to one sentence."
-        },
-        model,
-        memory
-    });
-    foreach string userMessage in userMessages {
-        string response = check agent.run(userMessage, sessionId);
-        io:println("Agent: ", response);
-    }
-    // Inspect the messages retained in memory after the conversation.
-    ai:ChatMessage[] messages = check memory.get(sessionId);
-    io:println("Messages retained: ", messages.length(), " (roles: ",
-            messages.map(message => message.role.toString()), ")");
-}
+final ai:Agent assistant = check new ({
+    systemPrompt: {
+        role: "Personal Assistant",
+        instructions: string \`You are a friendly assistant. Remember the details the user
+            shares and use them in later answers. Keep answers to one sentence.\`
+    },
+    model,
+    memory
+});
 
 public function main() returns error? {
-    io:println("--- Trimming on overflow ---");
-    check runConversation(trimmingMemory, "session-trim");
+    string sessionId = "user-1";
+    string response = check assistant.run("My name is Nadia and I live in Lisbon.", sessionId);
+    io:println(response);
+    response = check assistant.run("I have a cat called Milo.", sessionId);
+    io:println(response);
 
-    io:println("\\n--- Summarizing on overflow ---");
-    check runConversation(summarizingMemory, "session-summarize");
+    response = check assistant.run("I work as a marine biologist.", sessionId);
+    io:println(response);
+
+    // The three turns produced 7 messages, which exceeds the capacity of the store.
+    ai:ChatMessage[] messages = check memory.get(sessionId);
+    printMemory(messages);
+
+    // The overflow handler runs before the messages of this turn are added, and replaces the
+    // messages above with a single summary. The agent can still use the earlier context,
+    // even though the original messages are no longer in memory.
+    response = check assistant.run("What do you know about me?", sessionId);
+    io:println(response);
+
+    messages = check memory.get(sessionId);
+    printMemory(messages);
+}
+
+function printMemory(ai:ChatMessage[] messages) {
+    io:println("\\nMessages in memory: ", messages.length(),
+            " ", messages.map(message => message.role.toString()));
+    ai:ChatMessage summary = messages[1];
+    if summary is ai:ChatAssistantMessage {
+        io:println("Summary: ", summary.content, "\\n");
+    }
 }
 `,
 ];
@@ -75,24 +80,19 @@ export function AiAgentMemoryOverflowHandling({ codeSnippets }) {
         Short-term memory retains a fixed number of recent messages per session.
         When a session reaches the capacity of the memory store, the overflow
         handler configured for the <code>ai:ShortTermMemory</code> decides what
-        happens to the oldest messages.
-      </p>
-
-      <p>
-        Two strategies are available. The trim strategy (
+        happens to the oldest messages. The trim strategy (
         <code>ai:TrimOverflowHandlerConfiguration</code>, the default) removes
-        the oldest messages; the <code>trimCount</code> field controls how many
-        messages are removed at a time. The model-assisted strategy (
+        the oldest messages, and the model-assisted strategy (
         <code>ai:ModelAssistedOverflowHandlerConfiguration</code>) uses an LLM
         to summarize the older messages into a single message, so that important
-        context is retained in a condensed form rather than being lost. An
-        optional custom summarization prompt can be provided.
+        context is retained in a condensed form.
       </p>
 
       <p>
-        This example demonstrates both strategies with a small memory capacity,
-        so that overflow occurs within a short conversation, and inspects the
-        messages retained in memory afterwards.
+        This example demonstrates the model-assisted strategy with a small
+        memory capacity, so that overflow occurs within a short conversation.
+        The messages held in memory are printed before and after the overflow,
+        to show the older messages being replaced by a summary.
       </p>
 
       <blockquote>
@@ -234,20 +234,17 @@ export function AiAgentMemoryOverflowHandling({ codeSnippets }) {
           <pre ref={ref1}>
             <code className="d-flex flex-column">
               <span>{`\$ bal run ai_agent_memory_overflow_handling.bal`}</span>
-              <span>{`--- Trimming on overflow ---`}</span>
-              <span>{`Agent: Nice to meet you, Nadia! How can I assist you today?`}</span>
-              <span>{`Agent: Milo sounds adorable! What breed is he?`}</span>
-              <span>{`Agent: That sounds fascinating, Nadia! What aspect of marine biology do you specialize in?`}</span>
-              <span>{`Agent: I know that your name is Nadia, you live in Lisbon, have a cat named Milo, and work as a marine biologist.`}</span>
-              <span>{`Messages retained: 7 (roles: ["system","user","assistant","user","assistant","user","assistant"])`}</span>
+              <span>{`Nice to meet you, Nadia! How can I assist you today?`}</span>
+              <span>{`That's lovely, Nadia! How is Milo doing?`}</span>
+              <span>{`That's fascinating, Nadia! What aspect of marine biology do you specialize in?`}</span>
               <span>{`
 `}</span>
-              <span>{`--- Summarizing on overflow ---`}</span>
-              <span>{`Agent: Nice to meet you, Nadia! How can I assist you today?`}</span>
-              <span>{`Agent: Milo sounds adorable! What do you love most about him?`}</span>
-              <span>{`Agent: That’s fascinating, Nadia! What area of marine biology are you most passionate about?`}</span>
-              <span>{`Agent: I know that your name is Nadia, you live in Lisbon, you have a cat named Milo, and you work as a marine biologist.`}</span>
-              <span>{`Messages retained: 4 (roles: ["system","assistant","user","assistant"])`}</span>
+              <span>{`Messages in memory: 7 ["system","user","assistant","user","assistant","user","assistant"]`}</span>
+              <span>{`I know that your name is Nadia, you live in Lisbon, you have a cat named Milo, and you work as a marine biologist.`}</span>
+              <span>{`
+`}</span>
+              <span>{`Messages in memory: 4 ["system","assistant","user","assistant"]`}</span>
+              <span>{`Summary: Nadia, who lives in Lisbon, introduced herself and mentioned that she has a cat named Milo. She also stated that she works as a marine biologist. The assistant responded positively to her introductions and inquired about Milo's well-being and her specialization within marine biology.`}</span>
             </code>
           </pre>
         </Col>
@@ -260,7 +257,7 @@ export function AiAgentMemoryOverflowHandling({ codeSnippets }) {
           <span>&#8226;&nbsp;</span>
           <span>
             <a href="/learn/by-example/ai-agent-memory/">
-              The Agent with memory example
+              The Agent with in-memory short-term memory example
             </a>
           </span>
         </li>

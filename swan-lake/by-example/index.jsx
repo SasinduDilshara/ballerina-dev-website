@@ -2212,42 +2212,6 @@ import {
   codeSnippetData as DirectLlmCallsWithOllamaCodeSnippetData,
 } from "./direct-llm-calls-with-ollama/content.jsx";
 import {
-  RagWithInMemoryVectorStore,
-  codeSnippetData as RagWithInMemoryVectorStoreCodeSnippetData,
-} from "./rag-with-in-memory-vector-store/content.jsx";
-import {
-  RagIngestionWithExternalVectorStore,
-  codeSnippetData as RagIngestionWithExternalVectorStoreCodeSnippetData,
-} from "./rag-ingestion-with-external-vector-store/content.jsx";
-import {
-  RagQueryWithExternalVectorStore,
-  codeSnippetData as RagQueryWithExternalVectorStoreCodeSnippetData,
-} from "./rag-query-with-external-vector-store/content.jsx";
-import {
-  RagDocumentLoading,
-  codeSnippetData as RagDocumentLoadingCodeSnippetData,
-} from "./rag-document-loading/content.jsx";
-import {
-  RagDocumentChunking,
-  codeSnippetData as RagDocumentChunkingCodeSnippetData,
-} from "./rag-document-chunking/content.jsx";
-import {
-  RagEmbeddingProvider,
-  codeSnippetData as RagEmbeddingProviderCodeSnippetData,
-} from "./rag-embedding-provider/content.jsx";
-import {
-  RagWithPgvectorVectorStore,
-  codeSnippetData as RagWithPgvectorVectorStoreCodeSnippetData,
-} from "./rag-with-pgvector-vector-store/content.jsx";
-import {
-  RagQueryWithMetadataFilters,
-  codeSnippetData as RagQueryWithMetadataFiltersCodeSnippetData,
-} from "./rag-query-with-metadata-filters/content.jsx";
-import {
-  RagCustomKnowledgeBase,
-  codeSnippetData as RagCustomKnowledgeBaseCodeSnippetData,
-} from "./rag-custom-knowledge-base/content.jsx";
-import {
   McpService,
   codeSnippetData as McpServiceCodeSnippetData,
 } from "./mcp-service/content.jsx";
@@ -2256,13 +2220,13 @@ import {
   codeSnippetData as McpServiceAdvancedCodeSnippetData,
 } from "./mcp-service-advanced/content.jsx";
 import {
+  McpServiceWithRequestMetadata,
+  codeSnippetData as McpServiceWithRequestMetadataCodeSnippetData,
+} from "./mcp-service-with-request-metadata/content.jsx";
+import {
   McpClient,
   codeSnippetData as McpClientCodeSnippetData,
 } from "./mcp-client/content.jsx";
-import {
-  McpServiceWithSessions,
-  codeSnippetData as McpServiceWithSessionsCodeSnippetData,
-} from "./mcp-service-with-sessions/content.jsx";
 import {
   McpServiceHttpRequestBinding,
   codeSnippetData as McpServiceHttpRequestBindingCodeSnippetData,
@@ -2276,9 +2240,17 @@ import {
   codeSnippetData as AiAgentLocalToolsCodeSnippetData,
 } from "./ai-agent-local-tools/content.jsx";
 import {
+  AiAgentToolContext,
+  codeSnippetData as AiAgentToolContextCodeSnippetData,
+} from "./ai-agent-tool-context/content.jsx";
+import {
   AiAgentMcpIntegration,
   codeSnippetData as AiAgentMcpIntegrationCodeSnippetData,
 } from "./ai-agent-mcp-integration/content.jsx";
+import {
+  AiAgentMcpContext,
+  codeSnippetData as AiAgentMcpContextCodeSnippetData,
+} from "./ai-agent-mcp-context/content.jsx";
 import {
   AiAgentExternalEndpointIntegration,
   codeSnippetData as AiAgentExternalEndpointIntegrationCodeSnippetData,
@@ -2308,6 +2280,10 @@ import {
   codeSnippetData as AiAgentHumanInTheLoopCodeSnippetData,
 } from "./ai-agent-human-in-the-loop/content.jsx";
 import {
+  AiAgentId,
+  codeSnippetData as AiAgentIdCodeSnippetData,
+} from "./ai-agent-id/content.jsx";
+import {
   AiAgentTypedInputOutput,
   codeSnippetData as AiAgentTypedInputOutputCodeSnippetData,
 } from "./ai-agent-typed-input-output/content.jsx";
@@ -2327,6 +2303,118 @@ import {
   AiAgentEvaluation,
   codeSnippetData as AiAgentEvaluationCodeSnippetData,
 } from "./ai-agent-evaluation/content.jsx";
+import {
+  AiAgentFromAfm,
+  codeSnippetData as AiAgentFromAfmCodeSnippetData,
+} from "./ai-agent-from-afm/content.jsx";
+import {
+  RagDocumentLoading,
+  codeSnippetData as RagDocumentLoadingCodeSnippetData,
+} from "./rag-document-loading/content.jsx";
+import {
+  RagDocumentSources,
+  codeSnippetData as RagDocumentSourcesCodeSnippetData,
+} from "./rag-document-sources/content.jsx";
+import {
+  RagDocumentChunking,
+  codeSnippetData as RagDocumentChunkingCodeSnippetData,
+} from "./rag-document-chunking/content.jsx";
+import {
+  RagWithCustomChunker,
+  codeSnippetData as RagWithCustomChunkerCodeSnippetData,
+} from "./rag-with-custom-chunker/content.jsx";
+import {
+  RagEmbeddings,
+  codeSnippetData as RagEmbeddingsCodeSnippetData,
+} from "./rag-embeddings/content.jsx";
+import {
+  RagEmbeddingProvider,
+  codeSnippetData as RagEmbeddingProviderCodeSnippetData,
+} from "./rag-embedding-provider/content.jsx";
+import {
+  RagVectorStoreOperations,
+  codeSnippetData as RagVectorStoreOperationsCodeSnippetData,
+} from "./rag-vector-store-operations/content.jsx";
+import {
+  RagAugmentPrompt,
+  codeSnippetData as RagAugmentPromptCodeSnippetData,
+} from "./rag-augment-prompt/content.jsx";
+import {
+  RagInMemoryVectorStoreIngestion,
+  codeSnippetData as RagInMemoryVectorStoreIngestionCodeSnippetData,
+} from "./rag-in-memory-vector-store-ingestion/content.jsx";
+import {
+  RagWithoutChunking,
+  codeSnippetData as RagWithoutChunkingCodeSnippetData,
+} from "./rag-without-chunking/content.jsx";
+import {
+  RagWithConfiguredChunker,
+  codeSnippetData as RagWithConfiguredChunkerCodeSnippetData,
+} from "./rag-with-configured-chunker/content.jsx";
+import {
+  RagIngestionWithExternalVectorStore,
+  codeSnippetData as RagIngestionWithExternalVectorStoreCodeSnippetData,
+} from "./rag-ingestion-with-external-vector-store/content.jsx";
+import {
+  RagPgvectorIngestion,
+  codeSnippetData as RagPgvectorIngestionCodeSnippetData,
+} from "./rag-pgvector-ingestion/content.jsx";
+import {
+  RagAzureAiSearchIngestion,
+  codeSnippetData as RagAzureAiSearchIngestionCodeSnippetData,
+} from "./rag-azure-ai-search-ingestion/content.jsx";
+import {
+  RagVertexAiIngestion,
+  codeSnippetData as RagVertexAiIngestionCodeSnippetData,
+} from "./rag-vertex-ai-ingestion/content.jsx";
+import {
+  RagOpenrouterIngestion,
+  codeSnippetData as RagOpenrouterIngestionCodeSnippetData,
+} from "./rag-openrouter-ingestion/content.jsx";
+import {
+  RagInMemoryVectorStoreRetrieval,
+  codeSnippetData as RagInMemoryVectorStoreRetrievalCodeSnippetData,
+} from "./rag-in-memory-vector-store-retrieval/content.jsx";
+import {
+  RagQueryWithExternalVectorStore,
+  codeSnippetData as RagQueryWithExternalVectorStoreCodeSnippetData,
+} from "./rag-query-with-external-vector-store/content.jsx";
+import {
+  RagPgvectorRetrieval,
+  codeSnippetData as RagPgvectorRetrievalCodeSnippetData,
+} from "./rag-pgvector-retrieval/content.jsx";
+import {
+  RagAzureAiSearchRetrieval,
+  codeSnippetData as RagAzureAiSearchRetrievalCodeSnippetData,
+} from "./rag-azure-ai-search-retrieval/content.jsx";
+import {
+  RagWso2CloudKnowledgeBaseRetrieval,
+  codeSnippetData as RagWso2CloudKnowledgeBaseRetrievalCodeSnippetData,
+} from "./rag-wso2-cloud-knowledge-base-retrieval/content.jsx";
+import {
+  RagVertexAiRetrieval,
+  codeSnippetData as RagVertexAiRetrievalCodeSnippetData,
+} from "./rag-vertex-ai-retrieval/content.jsx";
+import {
+  RagOpenrouterRetrieval,
+  codeSnippetData as RagOpenrouterRetrievalCodeSnippetData,
+} from "./rag-openrouter-retrieval/content.jsx";
+import {
+  RagQueryWithMetadataFilters,
+  codeSnippetData as RagQueryWithMetadataFiltersCodeSnippetData,
+} from "./rag-query-with-metadata-filters/content.jsx";
+import {
+  RagCustomKnowledgeBase,
+  codeSnippetData as RagCustomKnowledgeBaseCodeSnippetData,
+} from "./rag-custom-knowledge-base/content.jsx";
+import {
+  AgenticRagWithWso2IntegrationKnowledgeBase,
+  codeSnippetData as AgenticRagWithWso2IntegrationKnowledgeBaseCodeSnippetData,
+} from "./agentic-rag-with-wso2-integration-knowledge-base/content.jsx";
+import {
+  AgenticRagWithPineconeVectorStore,
+  codeSnippetData as AgenticRagWithPineconeVectorStoreCodeSnippetData,
+} from "./agentic-rag-with-pinecone-vector-store/content.jsx";
 import {
   NaturalExpressions,
   codeSnippetData as NaturalExpressionsCodeSnippetData,
@@ -3533,40 +3621,26 @@ const BBEs = {
   DirectLlmCallsWithModelProviderCodeSnippetData,
   DirectLlmCallsWithOllama,
   DirectLlmCallsWithOllamaCodeSnippetData,
-  RagWithInMemoryVectorStore,
-  RagWithInMemoryVectorStoreCodeSnippetData,
-  RagIngestionWithExternalVectorStore,
-  RagIngestionWithExternalVectorStoreCodeSnippetData,
-  RagQueryWithExternalVectorStore,
-  RagQueryWithExternalVectorStoreCodeSnippetData,
-  RagDocumentLoading,
-  RagDocumentLoadingCodeSnippetData,
-  RagDocumentChunking,
-  RagDocumentChunkingCodeSnippetData,
-  RagEmbeddingProvider,
-  RagEmbeddingProviderCodeSnippetData,
-  RagWithPgvectorVectorStore,
-  RagWithPgvectorVectorStoreCodeSnippetData,
-  RagQueryWithMetadataFilters,
-  RagQueryWithMetadataFiltersCodeSnippetData,
-  RagCustomKnowledgeBase,
-  RagCustomKnowledgeBaseCodeSnippetData,
   McpService,
   McpServiceCodeSnippetData,
   McpServiceAdvanced,
   McpServiceAdvancedCodeSnippetData,
+  McpServiceWithRequestMetadata,
+  McpServiceWithRequestMetadataCodeSnippetData,
   McpClient,
   McpClientCodeSnippetData,
-  McpServiceWithSessions,
-  McpServiceWithSessionsCodeSnippetData,
   McpServiceHttpRequestBinding,
   McpServiceHttpRequestBindingCodeSnippetData,
   McpServiceSecurity,
   McpServiceSecurityCodeSnippetData,
   AiAgentLocalTools,
   AiAgentLocalToolsCodeSnippetData,
+  AiAgentToolContext,
+  AiAgentToolContextCodeSnippetData,
   AiAgentMcpIntegration,
   AiAgentMcpIntegrationCodeSnippetData,
+  AiAgentMcpContext,
+  AiAgentMcpContextCodeSnippetData,
   AiAgentExternalEndpointIntegration,
   AiAgentExternalEndpointIntegrationCodeSnippetData,
   ChatAgents,
@@ -3581,6 +3655,8 @@ const BBEs = {
   AiAgentMemoryOverflowHandlingCodeSnippetData,
   AiAgentHumanInTheLoop,
   AiAgentHumanInTheLoopCodeSnippetData,
+  AiAgentId,
+  AiAgentIdCodeSnippetData,
   AiAgentTypedInputOutput,
   AiAgentTypedInputOutputCodeSnippetData,
   AiAgentToolLoadingStrategy,
@@ -3591,6 +3667,62 @@ const BBEs = {
   AiAgentExecutionTraceCodeSnippetData,
   AiAgentEvaluation,
   AiAgentEvaluationCodeSnippetData,
+  AiAgentFromAfm,
+  AiAgentFromAfmCodeSnippetData,
+  RagDocumentLoading,
+  RagDocumentLoadingCodeSnippetData,
+  RagDocumentSources,
+  RagDocumentSourcesCodeSnippetData,
+  RagDocumentChunking,
+  RagDocumentChunkingCodeSnippetData,
+  RagWithCustomChunker,
+  RagWithCustomChunkerCodeSnippetData,
+  RagEmbeddings,
+  RagEmbeddingsCodeSnippetData,
+  RagEmbeddingProvider,
+  RagEmbeddingProviderCodeSnippetData,
+  RagVectorStoreOperations,
+  RagVectorStoreOperationsCodeSnippetData,
+  RagAugmentPrompt,
+  RagAugmentPromptCodeSnippetData,
+  RagInMemoryVectorStoreIngestion,
+  RagInMemoryVectorStoreIngestionCodeSnippetData,
+  RagWithoutChunking,
+  RagWithoutChunkingCodeSnippetData,
+  RagWithConfiguredChunker,
+  RagWithConfiguredChunkerCodeSnippetData,
+  RagIngestionWithExternalVectorStore,
+  RagIngestionWithExternalVectorStoreCodeSnippetData,
+  RagPgvectorIngestion,
+  RagPgvectorIngestionCodeSnippetData,
+  RagAzureAiSearchIngestion,
+  RagAzureAiSearchIngestionCodeSnippetData,
+  RagVertexAiIngestion,
+  RagVertexAiIngestionCodeSnippetData,
+  RagOpenrouterIngestion,
+  RagOpenrouterIngestionCodeSnippetData,
+  RagInMemoryVectorStoreRetrieval,
+  RagInMemoryVectorStoreRetrievalCodeSnippetData,
+  RagQueryWithExternalVectorStore,
+  RagQueryWithExternalVectorStoreCodeSnippetData,
+  RagPgvectorRetrieval,
+  RagPgvectorRetrievalCodeSnippetData,
+  RagAzureAiSearchRetrieval,
+  RagAzureAiSearchRetrievalCodeSnippetData,
+  RagWso2CloudKnowledgeBaseRetrieval,
+  RagWso2CloudKnowledgeBaseRetrievalCodeSnippetData,
+  RagVertexAiRetrieval,
+  RagVertexAiRetrievalCodeSnippetData,
+  RagOpenrouterRetrieval,
+  RagOpenrouterRetrievalCodeSnippetData,
+  RagQueryWithMetadataFilters,
+  RagQueryWithMetadataFiltersCodeSnippetData,
+  RagCustomKnowledgeBase,
+  RagCustomKnowledgeBaseCodeSnippetData,
+  AgenticRagWithWso2IntegrationKnowledgeBase,
+  AgenticRagWithWso2IntegrationKnowledgeBaseCodeSnippetData,
+  AgenticRagWithPineconeVectorStore,
+  AgenticRagWithPineconeVectorStoreCodeSnippetData,
   NaturalExpressions,
   NaturalExpressionsCodeSnippetData,
   NaturalExpressionsWithModelProvider,

@@ -432,8 +432,8 @@ export function AiAgentLocalTools({ codeSnippets }) {
         </Col>
         <Col sm={6}>
           <Link
-            title="Agent with MCP integration"
-            href="/learn/by-example/ai-agent-mcp-integration/"
+            title="Passing context to agent tools"
+            href="/learn/by-example/ai-agent-tool-context/"
           >
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
@@ -443,7 +443,7 @@ export function AiAgentLocalTools({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Agent with MCP integration
+                  Passing context to agent tools
                 </span>
               </div>
               <svg

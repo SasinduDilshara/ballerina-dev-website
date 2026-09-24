@@ -8,11 +8,7 @@ export const codeSnippetData = [
   `import ballerina/ai;
 import ballerina/io;
 
-// Documents of different types. The \`mimeType\` metadata identifies the type of each document.
-final ai:TextDocument[] documents = [
-    {
-        metadata: {fileName: "leave_policy.md", mimeType: "text/markdown"},
-        content: string \`# Leave policy
+final string markdownContent = string \`# Leave policy
 
 ## Annual leave
 
@@ -20,21 +16,22 @@ Full-time employees are entitled to 20 days of paid annual leave per year.
 
 ## Sick leave
 
-Employees are entitled to 10 days of paid sick leave per year.\`
-    },
-    {
-        metadata: {fileName: "travel_policy.html", mimeType: "text/html"},
-        content: string \`<h1>Travel policy</h1>
+Employees are entitled to 10 days of paid sick leave per year.\`;
+
+final string htmlContent = string \`<h1>Travel policy</h1>
 <h2>Booking</h2>
 <p>Business travel must be booked two weeks in advance.</p>
 <h2>Expenses</h2>
-<p>Meals are reimbursed up to 60 USD per day.</p>\`
-    },
-    {
-        metadata: {fileName: "code_of_conduct.txt", mimeType: "text/plain"},
-        content: string \`Treat colleagues, customers, and partners with respect.
-Harassment is not tolerated. Report any concerns to the HR team.\`
-    }
+<p>Meals are reimbursed up to 60 USD per day.</p>\`;
+
+final string textContent = string \`Treat colleagues, customers, and partners with respect.
+Harassment is not tolerated. Report any concerns to the HR team.\`;
+
+// Documents of different types. The \`mimeType\` metadata identifies the type of each document.
+final ai:TextDocument[] documents = [
+    {metadata: {fileName: "leave_policy.md", mimeType: "text/markdown"}, content: markdownContent},
+    {metadata: {fileName: "travel_policy.html", mimeType: "text/html"}, content: htmlContent},
+    {metadata: {fileName: "code_of_conduct.txt", mimeType: "text/plain"}, content: textContent}
 ];
 
 // Select a chunker based on the MIME type of the document. Each chunker uses the
@@ -82,7 +79,7 @@ export function RagDocumentChunking({ codeSnippets }) {
 
   return (
     <Container className="bbeBody d-flex flex-column h-100">
-      <h1>Document chunking for retrieval-augmented generation (RAG)</h1>
+      <h1>Chunk documents</h1>
 
       <p>
         Documents are split into smaller chunks before they are embedded and
@@ -248,7 +245,7 @@ export function RagDocumentChunking({ codeSnippets }) {
           <span>&#8226;&nbsp;</span>
           <span>
             <a href="/learn/by-example/rag-document-loading/">
-              The Document loading example
+              The Load documents example
             </a>
           </span>
         </li>
@@ -258,7 +255,7 @@ export function RagDocumentChunking({ codeSnippets }) {
           <span>&#8226;&nbsp;</span>
           <span>
             <a href="/learn/by-example/rag-ingestion-with-external-vector-store/">
-              The RAG ingestion with external vector store example
+              The Ingest into Pinecone example
             </a>
           </span>
         </li>
@@ -268,7 +265,7 @@ export function RagDocumentChunking({ codeSnippets }) {
           <span>&#8226;&nbsp;</span>
           <span>
             <a href="/learn/by-example/rag-query-with-metadata-filters/">
-              The Vector search with metadata filters example
+              The Filter results by metadata example
             </a>
           </span>
         </li>
@@ -278,8 +275,8 @@ export function RagDocumentChunking({ codeSnippets }) {
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="Document loading"
-            href="/learn/by-example/rag-document-loading/"
+            title="Load documents from multiple sources"
+            href="/learn/by-example/rag-document-sources/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
@@ -306,7 +303,7 @@ export function RagDocumentChunking({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Document loading
+                  Load documents from multiple sources
                 </span>
               </div>
             </div>
@@ -314,8 +311,8 @@ export function RagDocumentChunking({ codeSnippets }) {
         </Col>
         <Col sm={6}>
           <Link
-            title="Embeddings with a specific embedding provider"
-            href="/learn/by-example/rag-embedding-provider/"
+            title="Implement a custom chunker"
+            href="/learn/by-example/rag-with-custom-chunker/"
           >
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
@@ -325,7 +322,7 @@ export function RagDocumentChunking({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Embeddings with a specific embedding provider
+                  Implement a custom chunker
                 </span>
               </div>
               <svg

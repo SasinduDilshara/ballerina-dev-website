@@ -14,8 +14,11 @@ final ai:EmbeddingProvider embeddingProvider = check ai:getDefaultEmbeddingProvi
 
 // Create a knowledge base with the in-memory vector store.
 // Metadata filtering is also supported by the external vector store implementations.
+// The chunker argument is optional and defaults to \`ai:AUTO\`, which selects a chunker based
+// on the type of each ingested document or chunk. Pass a specific \`ai:Chunker\` for finer
+// control, or \`ai:DISABLE\` to store each input as a single chunk.
 final ai:KnowledgeBase knowledgeBase =
-        new ai:VectorKnowledgeBase(check new ai:InMemoryVectorStore(), embeddingProvider);
+        new ai:VectorKnowledgeBase(check new ai:InMemoryVectorStore(), embeddingProvider, ai:AUTO);
 
 public function main() returns error? {
     // Ingest chunks with custom metadata. In addition to the predefined fields
@@ -35,13 +38,13 @@ public function main() returns error? {
     string query = "How many days of leave do employees get?";
 
     // Retrieve without filters: results are ranked by vector similarity only.
-    ai:QueryMatch[] matches = check knowledgeBase.retrieve(query, 2);
+    ai:QueryMatch[] matches = check knowledgeBase.retrieve(query, 4);
     io:println("Without filters:");
     printMatches(matches);
 
     // Retrieve with a metadata filter to restrict the search to a specific department.
     // The default operator is \`ai:EQUAL\`.
-    matches = check knowledgeBase.retrieve(query, 2, {
+    matches = check knowledgeBase.retrieve(query, 4, {
         filters: [{key: "department", value: "HR"}]
     });
     io:println("\\nFiltered by department == HR:");
@@ -49,7 +52,7 @@ public function main() returns error? {
 
     // Combine multiple filters with \`ai:AND\`/\`ai:OR\` conditions and use comparison
     // operators such as \`ai:GREATER_THAN_OR_EQUAL\` or \`ai:IN\`.
-    matches = check knowledgeBase.retrieve(query, 2, {
+    matches = check knowledgeBase.retrieve(query, 4, {
         condition: ai:AND,
         filters: [
             {key: "department", operator: ai:IN, value: ["HR", "Finance"]},
@@ -61,7 +64,7 @@ public function main() returns error? {
 
     // Metadata filters can also be used to delete chunks from the knowledge base.
     check knowledgeBase.deleteByFilter({filters: [{key: "year", operator: ai:LESS_THAN, value: 2025}]});
-    matches = check knowledgeBase.retrieve(query, 3, {filters: [{key: "department", value: "HR"}]});
+    matches = check knowledgeBase.retrieve(query, 4, {filters: [{key: "department", value: "HR"}]});
     io:println("\\nHR chunks after deleting chunks from before 2025:");
     printMatches(matches);
 }
@@ -84,34 +87,32 @@ export function RagQueryWithMetadataFilters({ codeSnippets }) {
 
   return (
     <Container className="bbeBody d-flex flex-column h-100">
-      <h1>Vector search with metadata filters</h1>
+      <h1>Filter results by metadata</h1>
 
       <p>
         Chunks stored in a knowledge base carry metadata (
-        <code>ai:Metadata</code>), which includes predefined fields such as the
-        file name and chunk index as well as arbitrary custom fields. Metadata
-        filters (<code>ai:MetadataFilters</code>) allow you to combine vector
-        similarity search with exact conditions on the metadata, for example, to
-        restrict retrieval to a specific department, document, or time range.
-        This improves precision and enables multi-tenant scenarios where each
-        query must only see a subset of the data.
+        <code>ai:Metadata</code>) with predefined fields, such as the file name
+        and chunk index, and arbitrary custom fields. Metadata filters (
+        <code>ai:MetadataFilters</code>) combine vector similarity search with
+        exact conditions on this metadata, for example, to restrict retrieval to
+        a department, a document, or a time range, which improves precision and
+        enables multi-tenant scenarios.
       </p>
 
       <p>
-        Filters are expressed using <code>ai:MetadataFilter</code> values, each
-        with a key, an operator (<code>ai:EQUAL</code>,{" "}
-        <code>ai:NOT_EQUAL</code>, <code>ai:GREATER_THAN</code>,{" "}
-        <code>ai:LESS_THAN</code>, <code>ai:GREATER_THAN_OR_EQUAL</code>,{" "}
+        Each <code>ai:MetadataFilter</code> has a key, an operator (
+        <code>ai:EQUAL</code>, <code>ai:NOT_EQUAL</code>,{" "}
+        <code>ai:GREATER_THAN</code>, <code>ai:LESS_THAN</code>,{" "}
+        <code>ai:GREATER_THAN_OR_EQUAL</code>,{" "}
         <code>ai:LESS_THAN_OR_EQUAL</code>, <code>ai:IN</code>,{" "}
-        <code>ai:NOT_IN</code>), and a value. Multiple filters can be combined
-        with <code>ai:AND</code> or <code>ai:OR</code> conditions and nested.
-        The same filters can be used with the <code>deleteByFilter</code> method
-        to remove chunks from a knowledge base.
+        <code>ai:NOT_IN</code>), and a value. Filters can be combined with{" "}
+        <code>ai:AND</code> or <code>ai:OR</code> and nested, and the same
+        filters work with <code>deleteByFilter</code> to remove chunks.
       </p>
 
       <p>
-        This example demonstrates how to ingest chunks with custom metadata,
-        retrieve with and without filters, combine multiple filters, and delete
+        This example demonstrates ingesting chunks with custom metadata,
+        retrieving with and without filters, combining filters, and deleting
         chunks by filter.
       </p>
 
@@ -257,6 +258,8 @@ export function RagQueryWithMetadataFilters({ codeSnippets }) {
               <span>{`Without filters:`}</span>
               <span>{`- Employees get 18 days of paid annual leave. {"index":0,"department":"HR","year":2023}`}</span>
               <span>{`- Employees get 20 days of paid annual leave. {"index":0,"department":"HR","year":2025}`}</span>
+              <span>{`- Expense reports must be submitted within 30 days. {"index":0,"department":"Finance","year":2025}`}</span>
+              <span>{`- Production deployments require two approvals. {"index":0,"department":"Engineering","year":2025}`}</span>
               <span>{`
 `}</span>
               <span>{`Filtered by department == HR:`}</span>
@@ -282,8 +285,8 @@ export function RagQueryWithMetadataFilters({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="/learn/by-example/rag-with-in-memory-vector-store/">
-              The RAG with in-memory vector store example
+            <a href="/learn/by-example/rag-in-memory-vector-store-retrieval/">
+              The Retrieve from an in-memory vector store example
             </a>
           </span>
         </li>
@@ -293,7 +296,7 @@ export function RagQueryWithMetadataFilters({ codeSnippets }) {
           <span>&#8226;&nbsp;</span>
           <span>
             <a href="/learn/by-example/rag-query-with-external-vector-store/">
-              The RAG query with external vector store example
+              The Retrieve from Pinecone example
             </a>
           </span>
         </li>
@@ -303,7 +306,7 @@ export function RagQueryWithMetadataFilters({ codeSnippets }) {
           <span>&#8226;&nbsp;</span>
           <span>
             <a href="/learn/by-example/rag-document-chunking/">
-              The Document chunking example
+              The Chunk documents example
             </a>
           </span>
         </li>
@@ -313,8 +316,8 @@ export function RagQueryWithMetadataFilters({ codeSnippets }) {
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="RAG with pgvector vector store"
-            href="/learn/by-example/rag-with-pgvector-vector-store/"
+            title="Retrieve and generate with OpenRouter"
+            href="/learn/by-example/rag-openrouter-retrieval/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
@@ -341,7 +344,7 @@ export function RagQueryWithMetadataFilters({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  RAG with pgvector vector store
+                  Retrieve and generate with OpenRouter
                 </span>
               </div>
             </div>
@@ -349,7 +352,7 @@ export function RagQueryWithMetadataFilters({ codeSnippets }) {
         </Col>
         <Col sm={6}>
           <Link
-            title="Custom knowledge base"
+            title="Retrieve from a custom knowledge base"
             href="/learn/by-example/rag-custom-knowledge-base/"
           >
             <div className="btnContainer d-flex align-items-center ms-auto">
@@ -360,7 +363,7 @@ export function RagQueryWithMetadataFilters({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Custom knowledge base
+                  Retrieve from a custom knowledge base
                 </span>
               </div>
               <svg

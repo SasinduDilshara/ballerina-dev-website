@@ -24,16 +24,25 @@ listener mcp:StreamableHttpListener securedListener = new (9093,
     }
 );
 
-// Secure the MCP service with basic authentication using the file user store and
-// enforce authorization with scopes. The \`httpConfig\` field accepts the same
-// configuration as the \`@http:ServiceConfig\` annotation, so JWT or OAuth2
-// authentication can be configured in the same way.
+// Secure the MCP service with JWT authentication and enforce authorization with scopes.
+// The JWT sent in the \`Authorization\` header is validated against the issuer, the audience,
+// and the signature (using the public certificate), and the scopes in the \`scp\` claim are
+// checked against the \`scopes\` field. The \`httpConfig\` field accepts the same configuration
+// as the \`@http:ServiceConfig\` annotation, so basic authentication (file or LDAP user store)
+// and OAuth2 introspection can be configured in the same way.
 @mcp:StreamableHttpServiceConfig {
     info: {name: "Payroll MCP Server", version: "1.0.0"},
     httpConfig: {
         auth: [
             {
-                fileUserStoreConfig: {},
+                jwtValidatorConfig: {
+                    issuer: "wso2",
+                    audience: "ballerina",
+                    signatureConfig: {
+                        certFile: "../resource/path/to/public.crt"
+                    },
+                    scopeKey: "scp"
+                },
                 scopes: ["admin"]
             }
         ]
@@ -50,21 +59,10 @@ service mcp:StreamableHttpService /mcp on securedListener {
     }
 }
 `,
-  `[[ballerina.auth.users]]
-username="alice"
-password="alice@123"
-scopes=["admin"]
-
-[[ballerina.auth.users]]
-username="bob"
-password="bob@123"
-scopes=["developer"]
-`,
 ];
 
 export function McpServiceSecurity({ codeSnippets }) {
   const [codeClick1, updateCodeClick1] = useState(false);
-  const [codeClick2, updateCodeClick2] = useState(false);
 
   const [outputClick1, updateOutputClick1] = useState(false);
   const ref1 = createRef();
@@ -81,20 +79,22 @@ export function McpServiceSecurity({ codeSnippets }) {
         MCP servers that expose tools to AI agents often need to be secured, so
         that only authenticated and authorized clients can discover and call the
         tools. Since the MCP Streamable HTTP transport is built on HTTP, an MCP
-        service can be secured with the same mechanisms as an{" "}
-        <code>http:Service</code>: TLS on the listener via the{" "}
-        <code>secureSocket</code> configuration, and authentication and
-        authorization via the <code>auth</code> field of the{" "}
+        service is secured like an <code>http:Service</code>: TLS on the
+        listener via the <code>secureSocket</code> configuration, and
+        authentication and authorization via the <code>auth</code> field of the{" "}
         <code>httpConfig</code> configuration in the{" "}
-        <code>@mcp:StreamableHttpServiceConfig</code> annotation. Basic
-        authentication (file or LDAP user store), JWT, and OAuth2 are supported.
+        <code>@mcp:StreamableHttpServiceConfig</code> annotation. JWT, OAuth2
+        introspection, and basic authentication with a file or LDAP user store
+        are supported.
       </p>
 
       <p>
-        This example demonstrates an MCP server secured with TLS and basic
-        authentication using the file user store, with scope-based
-        authorization. Requests without valid credentials or without the
-        required scope are rejected before the tool is invoked.
+        This example demonstrates an MCP server secured with TLS and JWT
+        authentication. The JWT sent in the <code>Authorization</code> header is
+        validated against the configured issuer, audience, and signature, and
+        the scopes in the <code>scp</code> claim are used for authorization.
+        Requests without a valid JWT, or with a JWT that lacks the required
+        scope, are rejected before the tool is invoked.
       </p>
 
       <Row
@@ -153,76 +153,6 @@ export function McpServiceSecurity({ codeSnippets }) {
             <div
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(codeSnippets[0]),
-              }}
-            />
-          )}
-        </Col>
-      </Row>
-
-      <blockquote>
-        <p>
-          <strong>Info:</strong> As a prerequisite to running the service,
-          populate the <code>Config.toml</code> file correctly with the user
-          information as shown below.
-        </p>
-      </blockquote>
-
-      <Row
-        className="bbeCode mx-0 py-0 rounded 
-      "
-        style={{ marginLeft: "0px" }}
-      >
-        <Col className="d-flex align-items-start" sm={12}>
-          {codeClick2 ? (
-            <button
-              className="bg-transparent border-0 m-0 p-2  ms-auto"
-              disabled
-              aria-label="Copy to Clipboard Check"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="#20b6b0"
-                className="bi bi-check"
-                viewBox="0 0 16 16"
-              >
-                <title>Copied</title>
-                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z" />
-              </svg>
-            </button>
-          ) : (
-            <button
-              className="bg-transparent border-0 m-0 p-2  ms-auto"
-              onClick={() => {
-                updateCodeClick2(true);
-                copyToClipboard(codeSnippetData[1]);
-                setTimeout(() => {
-                  updateCodeClick2(false);
-                }, 3000);
-              }}
-              aria-label="Copy to Clipboard"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="#000"
-                className="bi bi-clipboard"
-                viewBox="0 0 16 16"
-              >
-                <title>Copy to Clipboard</title>
-                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
-                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
-              </svg>
-            </button>
-          )}
-        </Col>
-        <Col sm={12}>
-          {codeSnippets[1] != undefined && (
-            <div
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(codeSnippets[1]),
               }}
             />
           )}
@@ -291,9 +221,9 @@ export function McpServiceSecurity({ codeSnippets }) {
       </Row>
 
       <p>
-        Invoke the service using the cURL commands below. The first request uses
-        a user with the <code>admin</code> scope, the second uses a user without
-        it, and the third sends no credentials.
+        Invoke the service using the cURL commands below. The first request
+        carries a JWT with the <code>admin</code> scope, the second a JWT with
+        the <code>developer</code> scope only, and the third no JWT.
       </p>
 
       <Row
@@ -349,16 +279,16 @@ export function McpServiceSecurity({ codeSnippets }) {
         <Col sm={12}>
           <pre ref={ref2}>
             <code className="d-flex flex-column">
-              <span>{`\$ curl -k -u alice:alice@123 -X POST https://localhost:9093/mcp -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"getSalary","arguments":{"employeeId":"E-1001"}}}'`}</span>
+              <span>{`\$ curl -k -X POST https://localhost:9093/mcp -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsICJ0eXAiOiJKV1QifQ.eyJpc3MiOiJ3c28yIiwgInN1YiI6ImFsaWNlIiwgImF1ZCI6ImJhbGxlcmluYSIsICJleHAiOjIxMDU1MTM4NjYsICJuYmYiOjE3OTAxNTM4NjYsICJpYXQiOjE3OTAxNTM4NjYsICJzY3AiOiJhZG1pbiJ9.AY35DiVeWBKmmkYDWBFWXTSHD1Bfo7tEUQSV0OCTHQ38ELHvSdxJ3GCCUjHLivlUScj9AnRFj0GdaVX5dYPIbiQUziZKq0AljeYpY94UF-sceUjzsKqvWfecrA-Dj6ApR7ko6T969PhFErL1Q80QI4fq-mxSJvDABEgrpUwVRrAdaeycsRqU0h9TAMnoJwhBlCbrXrEJxZ-QEOFldIvovc0P_FepTA6sDpp7nMxnxFP4HPUk1nVZdlOlS0HeFt2816I-9G5JARj7ii6i8fkg5O0dIw4AW03jc6DiyFc2UPsW4fTUKsoYWHHKhLQnDsITHYWFEXQICdJTJjClKx87pA" -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"getSalary","arguments":{"employeeId":"E-1001"}}}'`}</span>
               <span>{`{"jsonrpc":"2.0", "id":1, "result":{"content":[{"type":"text", "text":"{\\"employeeId\\":\\"E-1001\\",\\"amount\\":5000.00,\\"currency\\":\\"USD\\"}"}]}}`}</span>
               <span>{`
 `}</span>
-              <span>{`\$ curl -k -u bob:bob@123 -X POST https://localhost:9093/mcp -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"getSalary","arguments":{"employeeId":"E-1001"}}}'`}</span>
-              <span>{`{"timestamp":"2026-09-21T09:55:36.833494Z", "status":403, "reason":"Forbidden", "message":"", "path":"/mcp", "method":"POST"}`}</span>
+              <span>{`\$ curl -k -X POST https://localhost:9093/mcp -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsICJ0eXAiOiJKV1QifQ.eyJpc3MiOiJ3c28yIiwgInN1YiI6ImJvYiIsICJhdWQiOiJiYWxsZXJpbmEiLCAiZXhwIjoyMTA1NTEzODY3LCAibmJmIjoxNzkwMTUzODY3LCAiaWF0IjoxNzkwMTUzODY3LCAic2NwIjoiZGV2ZWxvcGVyIn0.bqxVjz52BpsBiqWKEbQUF83MzC9G3stMqw_nKveeUyPQFh85l_YLzfRTg0KcL4hc321UtL-btBKlR015oiY8CA-pLJs-VPhObJy6hdzQAY3ImmIyH894km8ML8hNciU60mJ9S5mLgPbKmsA4SOItc4ja4WHc0q3jv53x0TVZ-NfR3jDve5tFZLzqh0aQ4iePQuC056C1KXBRh-XaZKYHXHRBuqMAvsoe-7Qy_9fclad3u1-yTQIEwbp_c1Thw7n12h2rRYhhq8OmpMgmljpghW7-HTlFi8mMGkKdQL8dMUmymXhKFy1ej5rKJU24C-aPzCKs3HBxU5D9kdBu4Cmr6w" -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"getSalary","arguments":{"employeeId":"E-1001"}}}'`}</span>
+              <span>{`{"timestamp":"2026-09-23T08:58:18.511962Z", "status":403, "reason":"Forbidden", "message":"", "path":"/mcp", "method":"POST"}`}</span>
               <span>{`
 `}</span>
               <span>{`\$ curl -k -X POST https://localhost:9093/mcp -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"getSalary","arguments":{"employeeId":"E-1001"}}}'`}</span>
-              <span>{`{"timestamp":"2026-09-21T09:55:36.878472Z", "status":401, "reason":"Unauthorized", "message":"", "path":"/mcp", "method":"POST"}`}</span>
+              <span>{`{"timestamp":"2026-09-23T08:58:18.546293Z", "status":401, "reason":"Unauthorized", "message":"", "path":"/mcp", "method":"POST"}`}</span>
             </code>
           </pre>
         </Col>
@@ -398,8 +328,8 @@ export function McpServiceSecurity({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="https://lib.ballerina.io/ballerina/auth/latest/">
-              <code>auth</code> module - API documentation
+            <a href="https://lib.ballerina.io/ballerina/jwt/latest/">
+              <code>jwt</code> module - API documentation
             </a>
           </span>
         </li>

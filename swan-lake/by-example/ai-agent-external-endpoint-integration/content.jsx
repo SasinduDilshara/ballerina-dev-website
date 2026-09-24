@@ -436,8 +436,8 @@ export function AiAgentExternalEndpointIntegration({ codeSnippets }) {
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="Agent with MCP integration"
-            href="/learn/by-example/ai-agent-mcp-integration/"
+            title="Passing context to MCP tools"
+            href="/learn/by-example/ai-agent-mcp-context/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
@@ -464,7 +464,7 @@ export function AiAgentExternalEndpointIntegration({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Agent with MCP integration
+                  Passing context to MCP tools
                 </span>
               </div>
             </div>

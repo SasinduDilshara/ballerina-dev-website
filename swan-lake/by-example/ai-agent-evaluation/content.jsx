@@ -344,8 +344,8 @@ export function AiAgentEvaluation({ codeSnippets }) {
         </Col>
         <Col sm={6}>
           <Link
-            title="Natural expressions"
-            href="/learn/by-example/natural-expressions/"
+            title="Deploy an agent from an AFM file"
+            href="/learn/by-example/ai-agent-from-afm/"
           >
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
@@ -355,7 +355,7 @@ export function AiAgentEvaluation({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Natural expressions
+                  Deploy an agent from an AFM file
                 </span>
               </div>
               <svg

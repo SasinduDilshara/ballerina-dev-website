@@ -287,10 +287,7 @@ export function DirectLlmCallsWithOllama({ codeSnippets }) {
           </Link>
         </Col>
         <Col sm={6}>
-          <Link
-            title="RAG with in-memory vector store"
-            href="/learn/by-example/rag-with-in-memory-vector-store/"
-          >
+          <Link title="MCP service" href="/learn/by-example/mcp-service/">
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
                 <span className="btnNext">Next</span>
@@ -299,7 +296,7 @@ export function DirectLlmCallsWithOllama({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  RAG with in-memory vector store
+                  MCP service
                 </span>
               </div>
               <svg

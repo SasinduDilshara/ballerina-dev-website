@@ -309,10 +309,7 @@ export function AiAgentTypedInputOutput({ codeSnippets }) {
 
       <Row className="mt-auto mb-5">
         <Col sm={6}>
-          <Link
-            title="Human-in-the-loop tool approval"
-            href="/learn/by-example/ai-agent-human-in-the-loop/"
-          >
+          <Link title="Agent ID" href="/learn/by-example/ai-agent-id/">
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -338,7 +335,7 @@ export function AiAgentTypedInputOutput({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Human-in-the-loop tool approval
+                  Agent ID
                 </span>
               </div>
             </div>

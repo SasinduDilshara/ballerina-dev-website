@@ -344,8 +344,8 @@ export function AiAgentMcpIntegration({ codeSnippets }) {
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="Agent with local tools"
-            href="/learn/by-example/ai-agent-local-tools/"
+            title="Passing context to agent tools"
+            href="/learn/by-example/ai-agent-tool-context/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
@@ -372,7 +372,7 @@ export function AiAgentMcpIntegration({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Agent with local tools
+                  Passing context to agent tools
                 </span>
               </div>
             </div>
@@ -380,8 +380,8 @@ export function AiAgentMcpIntegration({ codeSnippets }) {
         </Col>
         <Col sm={6}>
           <Link
-            title="Agent with external endpoint integration"
-            href="/learn/by-example/ai-agent-external-endpoint-integration/"
+            title="Passing context to MCP tools"
+            href="/learn/by-example/ai-agent-mcp-context/"
           >
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
@@ -391,7 +391,7 @@ export function AiAgentMcpIntegration({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Agent with external endpoint integration
+                  Passing context to MCP tools
                 </span>
               </div>
               <svg

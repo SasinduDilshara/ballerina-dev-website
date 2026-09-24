@@ -5,82 +5,63 @@ import { copyToClipboard, extractOutput } from "../../../utils/bbe";
 import Link from "next/link";
 
 export const codeSnippetData = [
-  `import ballerina/mcp;
+  `import ballerina/ai;
+import ballerina/io;
+import ballerinax/ai.azure;
+import ballerinax/azure.ai.search;
 
-// Configure the service to use stateful session management. In \`mcp:STATEFUL\` mode,
-// the transport assigns a session ID when a client initializes the connection and
-// maintains an \`mcp:Session\` object per client, which can be used to keep state
-// across tool calls. In \`mcp:STATELESS\` mode, each request is independent, and
-// \`mcp:AUTO\` (the default) decides based on whether the client initializes a session.
-@mcp:StreamableHttpServiceConfig {
-    info: {name: "Shopping Cart MCP Server", version: "1.0.0"},
-    sessionMode: mcp:STATEFUL
-}
-service mcp:StreamableHttpAdvancedService /mcp on new mcp:StreamableHttpListener(9091) {
+// Azure AI Search and Azure OpenAI configuration. Add the values to the \`Config.toml\` file.
+configurable string searchServiceUrl = ?;
+configurable string searchApiKey = ?;
+configurable string openAiServiceUrl = ?;
+configurable string openAiApiKey = ?;
+configurable string embeddingDeploymentId = ?;
 
-    isolated remote function onListTools() returns mcp:ListToolsResult|mcp:ServerError => {
-        tools: [
-            {
-                name: "addItem",
-                description: "Add an item to the shopping cart of the current session",
-                inputSchema: {
-                    "type": "object",
-                    "properties": {
-                        "item": {"type": "string", "description": "The name of the item"}
-                    },
-                    "required": ["item"]
-                }
-            },
-            {
-                name: "listItems",
-                description: "List the items in the shopping cart of the current session",
-                inputSchema: {"type": "object", "properties": {}}
-            }
-        ]
-    };
+// Use Azure OpenAI to generate the embeddings.
+final ai:EmbeddingProvider embeddingProvider =
+        check new azure:EmbeddingProvider(openAiServiceUrl, openAiApiKey, (), embeddingDeploymentId);
 
-    // The \`session\` parameter provides access to the session of the calling client.
-    isolated remote function onCallTool(mcp:CallToolParams params, mcp:Session? session)
-            returns mcp:CallToolResult|mcp:ServerError {
-        if session is () {
-            return error("A session is required to use the shopping cart");
+// Definition of a search index with a key field, a content field, and a vector field.
+// The dimension of the vector field must match the embedding model (1536 for this model).
+final search:SearchIndex hrPoliciesIndex = {
+    name: "hr-policies",
+    fields: [
+        {name: "id", 'type: "Edm.String", 'key: true},
+        {name: "content", 'type: "Edm.String", searchable: true},
+        {
+            name: "contentVector",
+            'type: "Collection(Edm.Single)",
+            searchable: true,
+            dimensions: 1536,
+            vectorSearchProfile: "hr-vector-profile"
         }
-
-        // Read the cart stored in the session, if any.
-        string[] items = [];
-        if session.hasKey("items") {
-            string[]|mcp:Error storedItems = session.getWithType("items");
-            if storedItems is mcp:Error {
-                return error("Failed to read the shopping cart", storedItems);
-            }
-            items = storedItems;
-        }
-
-        match params.name {
-            "addItem" => {
-                record {|string item;|}|error arguments = params.arguments.cloneWithType();
-                if arguments is error {
-                    return error("Invalid arguments", arguments);
-                }
-                items.push(arguments.item);
-                // Store the updated cart in the session.
-                session.set("items", items);
-                string message = string \`Added "\${arguments.item}". The cart now has \${items.length()} item(s).\`;
-                return {content: [{'type: "text", text: message}]};
-            }
-            "listItems" => {
-                string message = items.length() == 0 ? 
-                        "The cart is empty." : "Items in the cart: " + ", ".'join(...items);
-                return {content: [{'type: "text", text: message}]};
-            }
-        }
-        return error("Unknown tool: " + params.name);
+    ],
+    vectorSearch: {
+        algorithms: [{name: "hr-hnsw", kind: "hnsw"}],
+        profiles: [{name: "hr-vector-profile", algorithm: "hr-hnsw"}]
     }
+};
+
+public function main() returns error? {
+    // Create a knowledge base backed by a new index. Passing an index definition
+    // (\`search:SearchIndex\`) creates the index (or updates it, if it already exists).
+    ai:KnowledgeBase knowledgeBase = check new azure:AiSearchKnowledgeBase(searchServiceUrl, searchApiKey,
+            hrPoliciesIndex, embeddingProvider);
+
+    // Ingest the documents. The chunks are embedded and uploaded to the index, where they
+    // remain available to other programs.
+    ai:TextDocument[] documents = [
+        {content: "Full-time employees are entitled to 20 days of paid annual leave per year."},
+        {content: "Employees are entitled to 10 days of paid sick leave per year."},
+        {content: "Parental leave is 12 weeks and must be requested one month in advance."}
+    ];
+    check knowledgeBase.ingest(documents);
+    io:println("Ingested ", documents.length(), " documents into the 'hr-policies' index");
 }
 `,
 ];
 
-export function McpServiceWithSessions({ codeSnippets }) {
+export function RagAzureAiSearchIngestion({ codeSnippets }) {
   const [codeClick1, updateCodeClick1] = useState(false);
 
   const [outputClick1, updateOutputClick1] = useState(false);
@@ -90,48 +71,70 @@ export function McpServiceWithSessions({ codeSnippets }) {
 
   return (
     <Container className="bbeBody d-flex flex-column h-100">
-      <h1>Model Context Protocol (MCP) service with sessions</h1>
+      <h1>Ingest into Azure AI Search</h1>
 
       <p>
-        MCP servers that use the Streamable HTTP transport can manage sessions
-        for their clients. The <code>sessionMode</code> field of the{" "}
-        <code>@mcp:StreamableHttpServiceConfig</code> annotation controls the
-        session management mode: <code>mcp:STATEFUL</code> assigns a session ID
-        when a client initializes the connection and maintains a session per
-        client, <code>mcp:STATELESS</code> treats each request independently,
-        and <code>mcp:AUTO</code> (the default) decides based on whether the
-        client initializes a session.
+        In addition to the vector store-based{" "}
+        <code>ai:VectorKnowledgeBase</code>, Ballerina provides knowledge bases
+        backed by managed search services. The{" "}
+        <a href="https://central.ballerina.io/ballerinax/ai.azure/latest">
+          ballerinax/ai.azure
+        </a>{" "}
+        module provides <code>azure:AiSearchKnowledgeBase</code>, an{" "}
+        <code>ai:KnowledgeBase</code> implementation backed by{" "}
+        <a href="https://azure.microsoft.com/en-us/products/ai-services/ai-search">
+          Azure AI Search
+        </a>
+        , which stores the chunks and their embeddings in a search index and
+        retrieves them with vector search.
       </p>
 
       <p>
-        In stateful mode, the <code>onCallTool</code> method of an{" "}
-        <code>mcp:StreamableHttpAdvancedService</code> receives the{" "}
-        <code>mcp:Session</code> object of the calling client, which can be used
-        to store and retrieve state across tool calls within the same session
-        (e.g., a shopping cart, conversation context, or per-client
-        preferences).
+        The knowledge base can be created for a new index by passing a{" "}
+        <code>search:SearchIndex</code> definition, which creates the index, or
+        for an existing index by passing the index name. The index must have a
+        key field of type string, a content field (named <code>content</code> by
+        default), and a vector field whose dimension matches the embedding
+        model.
       </p>
 
       <p>
-        This example demonstrates an MCP server that keeps a shopping cart per
-        client session.
+        This example demonstrates creating a knowledge base with a new index
+        definition and ingesting documents into it, using Azure OpenAI for the
+        embeddings. To query the index, see the{" "}
+        <a href="/learn/by-example/rag-azure-ai-search-retrieval/">
+          Retrieve from Azure AI Search
+        </a>{" "}
+        example.
       </p>
 
       <blockquote>
         <p>
-          Note: Use an MCP client that initializes a session to invoke this
-          service, for example, an AI agent with an <code>ai:McpToolKit</code>{" "}
-          pointing to <code>http://localhost:9091/mcp</code>, or the{" "}
-          <a href="/learn/by-example/mcp-client/">MCP client</a> example adapted
-          to this service URL and to call the <code>addItem</code> and{" "}
-          <code>listItems</code> tools.
+          Note: Create an{" "}
+          <a href="https://learn.microsoft.com/en-us/azure/search/search-create-service-portal">
+            Azure AI Search
+          </a>{" "}
+          service and an Azure OpenAI resource with an embedding deployment, and
+          add the values to the <code>Config.toml</code> file (e.g.,{" "}
+          <code>
+            searchServiceUrl =
+            &quot;https://&lt;service&gt;.search.windows.net&quot;
+          </code>
+          , <code>searchApiKey = &quot;&lt;admin-key&gt;&quot;</code>,{" "}
+          <code>
+            openAiServiceUrl =
+            &quot;https://&lt;resource&gt;.services.ai.azure.com/openai/v1&quot;
+          </code>
+          , <code>openAiApiKey = &quot;&lt;api-key&gt;&quot;</code>,{" "}
+          <code>embeddingDeploymentId = &quot;&lt;deployment&gt;&quot;</code>).
+          Never commit API keys to source control.
         </p>
       </blockquote>
 
       <p>
         For more information on the underlying module, see the{" "}
-        <a href="https://lib.ballerina.io/ballerina/mcp/latest/">
-          <code>ballerina/mcp</code> module
+        <a href="https://lib.ballerina.io/ballerina/ai/latest/">
+          <code>ballerina/ai</code> module
         </a>
         .
       </p>
@@ -251,7 +254,8 @@ export function McpServiceWithSessions({ codeSnippets }) {
         <Col sm={12}>
           <pre ref={ref1}>
             <code className="d-flex flex-column">
-              <span>{`\$ bal run mcp_service_with_sessions.bal`}</span>
+              <span>{`\$ bal run rag_azure_ai_search_ingestion.bal`}</span>
+              <span>{`Ingested 3 documents into the 'hr-policies' index`}</span>
             </code>
           </pre>
         </Col>
@@ -263,16 +267,8 @@ export function McpServiceWithSessions({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="/learn/by-example/mcp-service/">The MCP service example</a>
-          </span>
-        </li>
-      </ul>
-      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
-        <li>
-          <span>&#8226;&nbsp;</span>
-          <span>
-            <a href="/learn/by-example/mcp-service-advanced/">
-              The MCP advanced service example
+            <a href="/learn/by-example/rag-azure-ai-search-retrieval/">
+              The Retrieve from Azure AI Search example
             </a>
           </span>
         </li>
@@ -281,7 +277,9 @@ export function McpServiceWithSessions({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="/learn/by-example/mcp-client/">The MCP client example</a>
+            <a href="/learn/by-example/rag-ingestion-with-external-vector-store/">
+              The Ingest into Pinecone example
+            </a>
           </span>
         </li>
       </ul>
@@ -289,8 +287,18 @@ export function McpServiceWithSessions({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="/learn/by-example/ai-agent-mcp-integration/">
-              The Agent with MCP integration example
+            <a href="https://central.ballerina.io/ballerinax/ai.azure/latest">
+              The <code>ballerinax/ai.azure</code> module
+            </a>
+          </span>
+        </li>
+      </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="https://central.ballerina.io/ballerinax/azure.ai.search/latest">
+              The <code>ballerinax/azure.ai.search</code> module
             </a>
           </span>
         </li>
@@ -299,7 +307,10 @@ export function McpServiceWithSessions({ codeSnippets }) {
 
       <Row className="mt-auto mb-5">
         <Col sm={6}>
-          <Link title="MCP client" href="/learn/by-example/mcp-client/">
+          <Link
+            title="Ingest into pgvector"
+            href="/learn/by-example/rag-pgvector-ingestion/"
+          >
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -325,7 +336,7 @@ export function McpServiceWithSessions({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  MCP client
+                  Ingest into pgvector
                 </span>
               </div>
             </div>
@@ -333,8 +344,8 @@ export function McpServiceWithSessions({ codeSnippets }) {
         </Col>
         <Col sm={6}>
           <Link
-            title="MCP tools with HTTP request binding"
-            href="/learn/by-example/mcp-service-http-request-binding/"
+            title="Ingest with Google Vertex AI embeddings"
+            href="/learn/by-example/rag-vertex-ai-ingestion/"
           >
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
@@ -344,7 +355,7 @@ export function McpServiceWithSessions({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  MCP tools with HTTP request binding
+                  Ingest with Google Vertex AI embeddings
                 </span>
               </div>
               <svg

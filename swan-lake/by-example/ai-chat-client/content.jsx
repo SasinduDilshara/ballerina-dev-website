@@ -234,7 +234,7 @@ export function AiChatClient({ codeSnippets }) {
           <span>&#8226;&nbsp;</span>
           <span>
             <a href="/learn/by-example/ai-agent-memory/">
-              The Agent with memory example
+              The Agent with in-memory short-term memory example
             </a>
           </span>
         </li>

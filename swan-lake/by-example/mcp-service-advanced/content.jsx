@@ -36,8 +36,8 @@ type WeatherForecast record {|
 // Define an MCP service attached to the MCP Streamable HTTP listener on port 9090.
 listener mcp:StreamableHttpListener mcpListener = new (9090);
 
-// Note how the service is declared with the \`mcp:AdvancedService\` type.
-service mcp:AdvancedService /mcp on mcpListener {
+// Note how the service is declared with the \`mcp:StreamableHttpAdvancedService\` type.
+service mcp:StreamableHttpAdvancedService /mcp on mcpListener {
 
     isolated remote function onListTools() returns mcp:ListToolsResult|mcp:ServerError => {
         tools: [
@@ -163,9 +163,10 @@ export function McpServiceAdvanced({ codeSnippets }) {
 
       <p>
         Ballerina’s MCP library allows you to create MCP servers that expose
-        tools. A <code>mcp:AdvancedService</code> service expects two remote
-        methods, namely <code>onListTools</code> and <code>onCallTool</code>, to
-        allow AI assistants to discover and call tools respectively.
+        tools. An <code>mcp:StreamableHttpAdvancedService</code> service expects
+        two remote methods, namely <code>onListTools</code> and{" "}
+        <code>onCallTool</code>, to allow AI assistants to discover and call
+        tools respectively.
       </p>
 
       <p>
@@ -375,7 +376,10 @@ export function McpServiceAdvanced({ codeSnippets }) {
           </Link>
         </Col>
         <Col sm={6}>
-          <Link title="MCP client" href="/learn/by-example/mcp-client/">
+          <Link
+            title="MCP service with request metadata"
+            href="/learn/by-example/mcp-service-with-request-metadata/"
+          >
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
                 <span className="btnNext">Next</span>
@@ -384,7 +388,7 @@ export function McpServiceAdvanced({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  MCP client
+                  MCP service with request metadata
                 </span>
               </div>
               <svg

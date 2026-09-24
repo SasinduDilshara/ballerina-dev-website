@@ -32,12 +32,12 @@ isolated function getOrder(string orderId) returns Order|error {
     }
 }
 
+// Mark the tool as requiring human approval. The agent pauses before calling this tool
+// and resumes only after a human approves or rejects the proposed call.
 # Issues a refund for an order. This action is irreversible.
 # + orderId - The order ID
 # + amount - The amount to refund
 # + return - A confirmation message, or an error if the order is not found
-// Mark the tool as requiring human approval. The agent pauses before calling this tool
-// and resumes only after a human approves or rejects the proposed call.
 @ai:AgentTool {requiresApproval: true}
 isolated function issueRefund(string orderId, decimal amount) returns string|error {
     lock {
@@ -353,10 +353,7 @@ export function AiAgentHumanInTheLoop({ codeSnippets }) {
           </Link>
         </Col>
         <Col sm={6}>
-          <Link
-            title="Agent with typed input and output"
-            href="/learn/by-example/ai-agent-typed-input-output/"
-          >
+          <Link title="Agent ID" href="/learn/by-example/ai-agent-id/">
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
                 <span className="btnNext">Next</span>
@@ -365,7 +362,7 @@ export function AiAgentHumanInTheLoop({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Agent with typed input and output
+                  Agent ID
                 </span>
               </div>
               <svg

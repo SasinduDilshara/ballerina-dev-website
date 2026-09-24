@@ -12,7 +12,7 @@ import ballerinax/ai.sqlite;
 // Use a persistent short-term memory store, so that the conversation history survives
 // restarts and can be shared by multiple instances of the agent. This example uses SQLite
 // via the \`ballerinax/ai.sqlite\` module, which runs in-process and needs no external service.
-// PostgreSQL, Redis, and MSSQL stores are available via the \`ballerinax/ai.memory.*\` modules.
+// Stores backed by PostgreSQL, Redis, Microsoft SQL Server, and Amazon DynamoDB are also available.
 final sqlite:ShortTermMemoryStore store = check new ({url: "jdbc:sqlite:./agent_memory.db"},
         // The maximum number of messages retained per session.
         maxMessagesPerKey = 30);
@@ -25,29 +25,23 @@ final ai:Agent supportAgent = check new ({
         instructions: string \`You help customers with their orders. Remember the details
             the customer shares and use them in later answers. Keep answers brief.\`
     },
-    // Use the default model provider (with configuration added via a Ballerina VS Code command).
     model: check ai:getDefaultModelProvider(),
     memory
 });
 
 public function main() returns error? {
     string sessionId = "customer-42";
-
-    // Check whether the session already has history (e.g., from a previous run of the program).
-    ai:ChatMessage[] history = check memory.get(sessionId);
-    if history.length() == 0 {
-        io:println("No previous conversation found. Starting a new conversation.");
-        string response = check supportAgent.run(
-                "Hi, my order number is ORD-7781 and it hasn't arrived yet.", sessionId);
-        io:println(response);
-    } else {
-        io:println("Continuing the conversation from ", history.length(), " stored messages.");
-    }
-
-    // Since the history is persisted in the database, the agent can answer this even if the
-    // program was restarted after the first message. Run the program again to observe this.
-    string response = check supportAgent.run("What was my order number again?", sessionId);
+    string response = check supportAgent.run(
+            "Hi, my order number is ORD-7781 and it hasn't arrived yet.", sessionId);
     io:println(response);
+    response = check supportAgent.run("What was my order number again?", sessionId);
+    io:println(response);
+
+    // The messages are persisted in the database, so they survive restarts of the program
+    // and are available to other instances of the agent that use the same store.
+    ai:ChatMessage[] messages = check memory.get(sessionId);
+    io:println("\\nMessages stored for session 'customer-42': ", messages.length(),
+            " ", messages.map(message => message.role.toString()));
 }
 `,
 ];
@@ -85,9 +79,13 @@ export function AiAgentPersistentMemory({ codeSnippets }) {
         <a href="https://central.ballerina.io/ballerinax/ai.memory.redis/latest">
           ballerinax/ai.memory.redis
         </a>
-        ), and Microsoft SQL Server (
+        ), Microsoft SQL Server (
         <a href="https://central.ballerina.io/ballerinax/ai.memory.mssql/latest">
           ballerinax/ai.memory.mssql
+        </a>
+        ), and Amazon DynamoDB (
+        <a href="https://central.ballerina.io/ballerinax/ai.aws.dynamodb/latest">
+          ballerinax/ai.aws.dynamodb
         </a>
         ). The same stores also persist the checkpoints of runs paused for human
         approval, provided the checkpoint table is created beforehand (see the
@@ -96,8 +94,9 @@ export function AiAgentPersistentMemory({ codeSnippets }) {
 
       <p>
         This example demonstrates an agent whose conversation history is
-        persisted in a SQLite database. Run the program twice to observe that
-        the second run continues the conversation stored by the first run.
+        persisted in a SQLite database. Since the history is stored in the
+        database file, running the program again continues the same
+        conversation.
       </p>
 
       <blockquote>
@@ -239,14 +238,11 @@ export function AiAgentPersistentMemory({ codeSnippets }) {
           <pre ref={ref1}>
             <code className="d-flex flex-column">
               <span>{`\$ bal run ai_agent_persistent_memory.bal`}</span>
-              <span>{`No previous conversation found. Starting a new conversation.`}</span>
-              <span>{`I can help with that! Let me check the status of your order ORD-7781. Could you please confirm your shipping address?`}</span>
-              <span>{`Your order number is ORD-7781. Would you like me to check the status for you?`}</span>
+              <span>{`I can help you with that! Let me check the status of your order, ORD-7781. Please hold on for a moment.`}</span>
+              <span>{`Your order number is ORD-7781.`}</span>
               <span>{`
 `}</span>
-              <span>{`\$ bal run ai_agent_persistent_memory.bal`}</span>
-              <span>{`Continuing the conversation from 5 stored messages.`}</span>
-              <span>{`Your order number is ORD-7781. How can I assist you further with it?`}</span>
+              <span>{`Messages stored for session 'customer-42': 5 ["system","user","assistant","user","assistant"]`}</span>
             </code>
           </pre>
         </Col>
@@ -259,7 +255,7 @@ export function AiAgentPersistentMemory({ codeSnippets }) {
           <span>&#8226;&nbsp;</span>
           <span>
             <a href="/learn/by-example/ai-agent-memory/">
-              The Agent with memory example
+              The Agent with in-memory short-term memory example
             </a>
           </span>
         </li>
@@ -314,12 +310,22 @@ export function AiAgentPersistentMemory({ codeSnippets }) {
           </span>
         </li>
       </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="https://central.ballerina.io/ballerinax/ai.aws.dynamodb/latest">
+              The <code>ballerinax/ai.aws.dynamodb</code> module
+            </a>
+          </span>
+        </li>
+      </ul>
       <span style={{ marginBottom: "20px" }}></span>
 
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="Agent with memory"
+            title="Agent with in-memory short-term memory"
             href="/learn/by-example/ai-agent-memory/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
@@ -347,7 +353,7 @@ export function AiAgentPersistentMemory({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Agent with memory
+                  Agent with in-memory short-term memory
                 </span>
               </div>
             </div>

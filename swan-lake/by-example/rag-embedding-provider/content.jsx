@@ -13,46 +13,33 @@ import ballerinax/ai.openai;
 configurable string openAiApiKey = ?;
 
 // Initialize an embedding provider for a specific provider using your own API key.
-// This example uses OpenAI via the \`ballerinax/ai.openai\` module. Other providers
-// (e.g., \`ballerinax/ai.azure\`) follow the same pattern and implement the same
-// \`ai:EmbeddingProvider\` type.
+// This example uses OpenAI; other \`ballerinax/ai.<provider>\` modules follow the same pattern.
 final ai:EmbeddingProvider embeddingProvider =
         check new openai:EmbeddingProvider(openAiApiKey, openai:TEXT_EMBEDDING_3_SMALL);
 
 public function main() returns error? {
-    // An embedding provider converts a chunk into a vector embedding.
-    // Semantically similar text produces vectors that are close to each other.
-    ai:TextChunk chunk = {content: "Employees are entitled to 20 days of paid annual leave per year."};
-    ai:Embedding embedding = check embeddingProvider->embed(chunk);
-
-    // The provider used in this example returns dense vectors (\`ai:Vector\`).
-    // Some providers also support sparse or hybrid vectors.
-    if embedding is ai:Vector {
-        io:println("Embedding dimension: ", embedding.length());
-    }
+    // An embedding provider converts a chunk into a vector embedding. Semantically
+    // similar text produces vectors that are close to each other.
+    ai:TextChunk document = {content: "Employees are entitled to 20 days of paid annual leave per year."};
+    ai:Embedding documentEmbedding = check embeddingProvider->embed(document);
 
     // Use \`batchEmbed\` to embed multiple chunks in a single request.
-    ai:TextChunk[] chunks = [
+    ai:TextChunk[] candidates = [
         {content: "How many days of vacation do I get?"},
+        {content: "Sick leave requires a medical certificate after two days."},
         {content: "The quarterly sales report is due on Friday."}
     ];
-    ai:Embedding[] embeddings = check embeddingProvider->batchEmbed(chunks);
+    ai:Embedding[] candidateEmbeddings = check embeddingProvider->batchEmbed(candidates);
 
-    // Compare the similarity of each chunk with the first chunk using cosine similarity.
-    foreach int i in 0 ..< chunks.length() {
-        ai:Embedding other = embeddings[i];
-        if embedding is ai:Vector && other is ai:Vector {
-            io:println(string \`Similarity with "\${chunks[i].content}": \${cosineSimilarity(embedding, other)}\`);
+    // Compare each candidate with the document using cosine similarity.
+    // The provider used in this example returns dense vectors (\`ai:Vector\`).
+    foreach int i in 0 ..< candidates.length() {
+        ai:Embedding candidateEmbedding = candidateEmbeddings[i];
+        if documentEmbedding is ai:Vector && candidateEmbedding is ai:Vector {
+            float similarity = cosineSimilarity(documentEmbedding, candidateEmbedding);
+            io:println(string \`Similarity with "\${candidates[i].content}": \${similarity}\`);
         }
     }
-
-    // In a RAG workflow, the embedding provider is typically passed to an
-    // \`ai:VectorKnowledgeBase\`, which embeds chunks during ingestion and
-    // embeds queries during retrieval.
-    ai:KnowledgeBase knowledgeBase = new ai:VectorKnowledgeBase(check new ai:InMemoryVectorStore(), embeddingProvider);
-    check knowledgeBase.ingest(chunks);
-    ai:QueryMatch[] matches = check knowledgeBase.retrieve("vacation days", 1);
-    io:println("Best match for 'vacation days': ", matches[0].chunk.content);
 }
 
 function cosineSimilarity(ai:Vector a, ai:Vector b) returns float {
@@ -79,7 +66,7 @@ export function RagEmbeddingProvider({ codeSnippets }) {
 
   return (
     <Container className="bbeBody d-flex flex-column h-100">
-      <h1>Embeddings with a specific embedding provider</h1>
+      <h1>Generate embeddings with a specific provider</h1>
 
       <p>
         An embedding provider (<code>ai:EmbeddingProvider</code>) converts text
@@ -94,10 +81,18 @@ export function RagEmbeddingProvider({ codeSnippets }) {
         implemented by provider-specific modules such as{" "}
         <a href="https://central.ballerina.io/ballerinax/ai.openai/latest">
           ballerinax/ai.openai
-        </a>{" "}
-        and{" "}
+        </a>
+        ,{" "}
         <a href="https://central.ballerina.io/ballerinax/ai.azure/latest">
           ballerinax/ai.azure
+        </a>
+        ,{" "}
+        <a href="https://central.ballerina.io/ballerinax/ai.googleapis.vertex/latest">
+          ballerinax/ai.googleapis.vertex
+        </a>
+        , and{" "}
+        <a href="https://central.ballerina.io/ballerinax/ai.openrouter/latest">
+          ballerinax/ai.openrouter
         </a>
         , so the same code works across providers. The default embedding
         provider (<code>ai:getDefaultEmbeddingProvider()</code>) can be used
@@ -106,8 +101,13 @@ export function RagEmbeddingProvider({ codeSnippets }) {
 
       <p>
         This example demonstrates how to initialize a specific embedding
-        provider with your own API key, embed single and multiple chunks,
-        compare embeddings, and use the provider with a knowledge base.
+        provider with your own API key, embed a document and a batch of
+        candidate texts, and compare the similarity of each candidate with the
+        document. To use embeddings in a knowledge base for RAG, see the{" "}
+        <a href="/learn/by-example/rag-in-memory-vector-store-retrieval/">
+          Retrieve from an in-memory vector store
+        </a>{" "}
+        example.
       </p>
 
       <blockquote>
@@ -242,10 +242,9 @@ export function RagEmbeddingProvider({ codeSnippets }) {
           <pre ref={ref1}>
             <code className="d-flex flex-column">
               <span>{`\$ bal run rag_embedding_provider.bal`}</span>
-              <span>{`Embedding dimension: 1536`}</span>
               <span>{`Similarity with "How many days of vacation do I get?": 0.4902967745008488`}</span>
+              <span>{`Similarity with "Sick leave requires a medical certificate after two days.": 0.39024410544210736`}</span>
               <span>{`Similarity with "The quarterly sales report is due on Friday.": 0.10989803814815992`}</span>
-              <span>{`Best match for 'vacation days': How many days of vacation do I get?`}</span>
             </code>
           </pre>
         </Col>
@@ -257,8 +256,18 @@ export function RagEmbeddingProvider({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="/learn/by-example/rag-with-in-memory-vector-store/">
-              The RAG with in-memory vector store example
+            <a href="/learn/by-example/rag-embeddings/">
+              The Generate embeddings example
+            </a>
+          </span>
+        </li>
+      </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="/learn/by-example/rag-in-memory-vector-store-retrieval/">
+              The Retrieve from an in-memory vector store example
             </a>
           </span>
         </li>
@@ -268,7 +277,7 @@ export function RagEmbeddingProvider({ codeSnippets }) {
           <span>&#8226;&nbsp;</span>
           <span>
             <a href="/learn/by-example/rag-ingestion-with-external-vector-store/">
-              The RAG ingestion with external vector store example
+              The Ingest into Pinecone example
             </a>
           </span>
         </li>
@@ -318,8 +327,8 @@ export function RagEmbeddingProvider({ codeSnippets }) {
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="Document chunking"
-            href="/learn/by-example/rag-document-chunking/"
+            title="Generate embeddings"
+            href="/learn/by-example/rag-embeddings/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
@@ -346,7 +355,7 @@ export function RagEmbeddingProvider({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Document chunking
+                  Generate embeddings
                 </span>
               </div>
             </div>
@@ -354,8 +363,8 @@ export function RagEmbeddingProvider({ codeSnippets }) {
         </Col>
         <Col sm={6}>
           <Link
-            title="RAG with pgvector vector store"
-            href="/learn/by-example/rag-with-pgvector-vector-store/"
+            title="Vector store operations"
+            href="/learn/by-example/rag-vector-store-operations/"
           >
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
@@ -365,7 +374,7 @@ export function RagEmbeddingProvider({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  RAG with pgvector vector store
+                  Vector store operations
                 </span>
               </div>
               <svg

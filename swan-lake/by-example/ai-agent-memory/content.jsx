@@ -8,11 +8,9 @@ export const codeSnippetData = [
   `import ballerina/ai;
 import ballerina/io;
 
-// Agents use memory to keep the conversation history of each session, so that follow-up
-// questions can refer to earlier messages. By default, an agent uses in-memory short-term
-// memory with a fixed capacity. Configure the memory explicitly to control the capacity
-// (the number of recent user, assistant, and tool messages retained per session; the system
-// message is kept separately), the store, or the overflow handling.
+// By default, an agent uses in-memory short-term memory with a fixed capacity. Configure the
+// memory explicitly to control the capacity (messages retained per session), the store, or
+// the overflow handling.
 final ai:Memory memory = check new ai:ShortTermMemory(check new ai:InMemoryShortTermMemoryStore(20));
 
 final ai:Agent travelAgent = check new ({
@@ -21,7 +19,6 @@ final ai:Agent travelAgent = check new ({
         instructions: string \`You help users plan trips. Remember the details the user
             shares and use them in later answers. Keep answers to two sentences.\`
     },
-    // Use the default model provider (with configuration added via a Ballerina VS Code command).
     model: check ai:getDefaultModelProvider(),
     memory
 });
@@ -42,10 +39,19 @@ public function main() returns error? {
     response = check travelAgent.run("Where am I planning to travel?", "user-2");
     io:println(response);
 
-    // The stored messages can be retrieved or deleted using the memory instance.
+    // The stored messages can be retrieved using the memory instance. After two turns, the memory of
+    // the first session holds 5 messages: the system message, 2 user messages, and 2 assistant messages.
     ai:ChatMessage[] messages = check memory.get(sessionId);
-    io:println("\\nMessages stored for session 'user-1': ", messages.length());
+    io:println("\\nMessages stored for session 'user-1': ", messages.length(),
+            " ", messages.map(message => message.role.toString()));
+
+    // Deleting a session clears only that session; other sessions are not affected.
     check memory.delete(sessionId);
+    messages = check memory.get(sessionId);
+    io:println("Messages stored for session 'user-1' after deletion: ", messages.length());
+    messages = check memory.get("user-2");
+    io:println("Messages stored for session 'user-2': ", messages.length(),
+            " ", messages.map(message => message.role.toString()));
 }
 `,
 ];
@@ -60,7 +66,7 @@ export function AiAgentMemory({ codeSnippets }) {
 
   return (
     <Container className="bbeBody d-flex flex-column h-100">
-      <h1>Agent with memory</h1>
+      <h1>Agent with in-memory short-term memory</h1>
 
       <p>
         AI agents use memory to keep the conversation history of each session,
@@ -76,9 +82,8 @@ export function AiAgentMemory({ codeSnippets }) {
         <code>ai:InMemoryShortTermMemoryStore</code>) that retains a fixed
         number of recent messages per session. You can configure the memory
         explicitly to change the capacity, use a persistent store (e.g.,
-        PostgreSQL, Redis, or SQLite via the <code>ballerinax/ai.memory.*</code>{" "}
-        and <code>ballerinax/ai.sqlite</code> modules), or customize how
-        overflow is handled. To create a stateless agent, set the{" "}
+        PostgreSQL, Redis, SQLite, Microsoft SQL Server, or Amazon DynamoDB), or
+        customize how overflow is handled. To create a stateless agent, set the{" "}
         <code>memory</code> field to <code>()</code>.
       </p>
 
@@ -226,12 +231,14 @@ export function AiAgentMemory({ codeSnippets }) {
           <pre ref={ref1}>
             <code className="d-flex flex-column">
               <span>{`\$ bal run ai_agent_memory.bal`}</span>
-              <span>{`That sounds exciting! Do you have specific cities or attractions in mind for your trip to Japan with your kids?`}</span>
-              <span>{`A great activity for your family would be visiting Tokyo Disneyland, where your kids can enjoy rides, meet characters, and experience the magic of Disney in a unique Japanese setting. It’s a fun and memorable way to spend a day during your 5-day trip!`}</span>
-              <span>{`You haven't shared your travel destination yet. Please let me know where you're planning to go!`}</span>
+              <span>{`That sounds exciting! Do you have specific cities or activities in mind for your trip to Japan?`}</span>
+              <span>{`A great activity for you and your kids would be visiting Tokyo Disneyland, where they can enjoy rides and meet beloved characters. It's a fun experience for the whole family and offers a variety of attractions suitable for all ages.`}</span>
+              <span>{`You haven't mentioned your travel destination yet. Where are you planning to go?`}</span>
               <span>{`
 `}</span>
-              <span>{`Messages stored for session 'user-1': 5`}</span>
+              <span>{`Messages stored for session 'user-1': 5 ["system","user","assistant","user","assistant"]`}</span>
+              <span>{`Messages stored for session 'user-1' after deletion: 0`}</span>
+              <span>{`Messages stored for session 'user-2': 3 ["system","user","assistant"]`}</span>
             </code>
           </pre>
         </Col>
@@ -303,6 +310,16 @@ export function AiAgentMemory({ codeSnippets }) {
           <span>
             <a href="https://central.ballerina.io/ballerinax/ai.sqlite/latest">
               The <code>ballerinax/ai.sqlite</code> module
+            </a>
+          </span>
+        </li>
+      </ul>
+      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
+        <li>
+          <span>&#8226;&nbsp;</span>
+          <span>
+            <a href="https://central.ballerina.io/ballerinax/ai.aws.dynamodb/latest">
+              The <code>ballerinax/ai.aws.dynamodb</code> module
             </a>
           </span>
         </li>

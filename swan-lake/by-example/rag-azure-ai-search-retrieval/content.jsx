@@ -7,47 +7,31 @@ import Link from "next/link";
 export const codeSnippetData = [
   `import ballerina/ai;
 import ballerina/io;
-import ballerinax/ai.pgvector;
+import ballerinax/ai.azure;
 
-// Configuration for the PostgreSQL database with the pgvector extension.
-configurable string pgHost = "localhost";
-configurable int pgPort = 5432;
-configurable string pgUser = "postgres";
-configurable string pgPassword = ?;
-configurable string pgDatabase = "vector_db";
+// Azure AI Search and Azure OpenAI configuration. Add the values to the \`Config.toml\` file.
+configurable string searchServiceUrl = ?;
+configurable string searchApiKey = ?;
+configurable string openAiServiceUrl = ?;
+configurable string openAiApiKey = ?;
+configurable string chatDeploymentId = ?;
+configurable string embeddingDeploymentId = ?;
 
-// Define the vector store to use. The example uses pgvector, a PostgreSQL extension
-// for vector similarity search. The table is created if it does not exist.
-// Alternatively, you can use other providers (e.g., Milvus, Pinecone, Weaviate)
-// or the in-memory vector store (\`ai:InMemoryVectorStore\`).
-final ai:VectorStore vectorStore = check new pgvector:VectorStore(pgHost, pgUser, pgPassword,
-        pgDatabase, tableName = "leave_policy_vectors", port = pgPort,
-        // The vector dimension must match the embedding provider used.
-        configs = {vectorDimension: 1536});
+// Retrieval must use the embedding provider that was used for ingestion, so that the
+// query and the stored chunks are embedded into the same vector space.
+final ai:EmbeddingProvider embeddingProvider =
+        check new azure:EmbeddingProvider(openAiServiceUrl, openAiApiKey, (), embeddingDeploymentId);
 
-// Define the embedding provider to use.
-// The example uses the default embedding provider implementation
-// (with configuration added via a Ballerina VS Code command).
-final ai:EmbeddingProvider embeddingProvider = check ai:getDefaultEmbeddingProvider();
-
-// Use the default model provider to generate the final response.
-final ai:ModelProvider model = check ai:getDefaultModelProvider();
-
-// Create the knowledge base with the vector store and embedding provider.
-final ai:KnowledgeBase knowledgeBase = new ai:VectorKnowledgeBase(vectorStore, embeddingProvider);
+// Use Azure OpenAI to generate the final response.
+final ai:ModelProvider model = check new azure:OpenAiModelProvider(openAiServiceUrl, openAiApiKey, chatDeploymentId);
 
 public function main() returns error? {
-    // Ingest documents into the knowledge base. The chunks are embedded and
-    // stored in the PostgreSQL table.
-    ai:TextDocument[] documents = [
-        {content: "Full-time employees are entitled to 20 days of paid annual leave per year."},
-        {content: "Employees are entitled to 10 days of paid sick leave per year."},
-        {content: "Parental leave is 12 weeks and must be requested one month in advance."}
-    ];
-    check knowledgeBase.ingest(documents);
-    io:println("Ingestion successful");
+    // Create a knowledge base backed by an existing index by passing the index name.
+    // The index must already exist in the Azure AI Search service.
+    ai:KnowledgeBase knowledgeBase = check new azure:AiSearchKnowledgeBase(searchServiceUrl, searchApiKey,
+            "hr-policies", embeddingProvider);
 
-    // Retrieve the most relevant chunks for a query using vector similarity search.
+    // Retrieve the most relevant chunks for the query using vector search.
     string query = "How much paid vacation do I get?";
     ai:QueryMatch[] matches = check knowledgeBase.retrieve(query, 2);
     foreach ai:QueryMatch queryMatch in matches {
@@ -62,7 +46,7 @@ public function main() returns error? {
 `,
 ];
 
-export function RagWithPgvectorVectorStore({ codeSnippets }) {
+export function RagAzureAiSearchRetrieval({ codeSnippets }) {
   const [codeClick1, updateCodeClick1] = useState(false);
 
   const [outputClick1, updateOutputClick1] = useState(false);
@@ -72,49 +56,54 @@ export function RagWithPgvectorVectorStore({ codeSnippets }) {
 
   return (
     <Container className="bbeBody d-flex flex-column h-100">
-      <h1>RAG with pgvector vector store</h1>
+      <h1>Retrieve from Azure AI Search</h1>
 
       <p>
-        Ballerina provides the <code>ai:VectorStore</code> abstraction for
-        persisting and searching vector embeddings, with implementations for
-        external vector databases such as pgvector, Milvus, Pinecone, and
-        Weaviate, in addition to the built-in{" "}
-        <code>ai:InMemoryVectorStore</code>. Since all implementations share the
-        same type, the vector store can be swapped without changing the rest of
-        the retrieval-augmented generation (RAG) workflow.
+        Once documents are ingested into an Azure AI Search index, any program
+        can retrieve from it by creating an{" "}
+        <code>azure:AiSearchKnowledgeBase</code> for the existing index. The
+        retrieval side of a retrieval-augmented generation (RAG) workflow embeds
+        the user’s question with the same embedding provider that was used for
+        ingestion, retrieves the most similar chunks with vector search, and
+        augments the prompt sent to the LLM with them.
       </p>
 
       <p>
-        This example demonstrates an end-to-end RAG workflow using{" "}
-        <a href="https://github.com/pgvector/pgvector">pgvector</a>, a
-        PostgreSQL extension for vector similarity search, via the{" "}
-        <a href="https://central.ballerina.io/ballerinax/ai.pgvector/latest">
-          ballerinax/ai.pgvector
+        This example demonstrates retrieving from an existing index via the{" "}
+        <a href="https://central.ballerina.io/ballerinax/ai.azure/latest">
+          ballerinax/ai.azure
         </a>{" "}
-        module. Documents are ingested into a knowledge base backed by a
-        PostgreSQL table, relevant chunks are retrieved for a query, and the
-        query is augmented with the retrieved context before calling the LLM.
+        module and generating an answer with Azure OpenAI.
       </p>
 
       <blockquote>
         <p>
-          Note: This example requires a running PostgreSQL instance with the
-          pgvector extension enabled. For example, start one with Docker using{" "}
-          <code>
-            docker run --name pgvector-db -e POSTGRES_PASSWORD=&lt;password&gt;
-            -e POSTGRES_DB=vector_db -p 5432:5432 -d pgvector/pgvector:pg17
-          </code>{" "}
-          and run <code>CREATE EXTENSION IF NOT EXISTS vector;</code> in the
-          database. Add the database configuration to the{" "}
+          Prerequisite: Run the{" "}
+          <a href="/learn/by-example/rag-azure-ai-search-ingestion/">
+            Ingest into Azure AI Search
+          </a>{" "}
+          example first. It creates and populates the <code>hr-policies</code>{" "}
+          index that this example queries.
+        </p>
+      </blockquote>
+
+      <blockquote>
+        <p>
+          Note: Add the Azure AI Search and Azure OpenAI values to the{" "}
           <code>Config.toml</code> file (e.g.,{" "}
-          <code>pgPassword = &quot;&lt;password&gt;&quot;</code>). This example
-          also uses the default model and embedding provider implementations. To
-          generate the necessary configuration, open up the VS Code command
-          palette (<code>Ctrl</code> + <code>Shift</code> + <code>P</code> or{" "}
-          <code>command</code> + <code>shift</code> + <code>P</code>), and run
-          the <code>Configure default WSO2 Model Provider</code> command to add
-          your configuration to the <code>Config.toml</code> file. If not
-          already logged in, log in to the Ballerina Copilot when prompted.
+          <code>
+            searchServiceUrl =
+            &quot;https://&lt;service&gt;.search.windows.net&quot;
+          </code>
+          , <code>searchApiKey = &quot;&lt;admin-key&gt;&quot;</code>,{" "}
+          <code>
+            openAiServiceUrl =
+            &quot;https://&lt;resource&gt;.services.ai.azure.com/openai/v1&quot;
+          </code>
+          , <code>openAiApiKey = &quot;&lt;api-key&gt;&quot;</code>,{" "}
+          <code>chatDeploymentId = &quot;&lt;deployment&gt;&quot;</code>,{" "}
+          <code>embeddingDeploymentId = &quot;&lt;deployment&gt;&quot;</code>).
+          Never commit API keys to source control.
         </p>
       </blockquote>
 
@@ -241,13 +230,12 @@ export function RagWithPgvectorVectorStore({ codeSnippets }) {
         <Col sm={12}>
           <pre ref={ref1}>
             <code className="d-flex flex-column">
-              <span>{`\$ bal run rag_with_pgvector_vector_store.bal`}</span>
-              <span>{`Ingestion successful`}</span>
-              <span>{`Match: Full-time employees are entitled to 20 days of paid annual leave per year. (score: 0.5103892271108346)`}</span>
-              <span>{`Match: Employees are entitled to 10 days of paid sick leave per year. (score: 0.4902235732461744)`}</span>
+              <span>{`\$ bal run rag_azure_ai_search_retrieval.bal`}</span>
+              <span>{`Match: Full-time employees are entitled to 20 days of paid annual leave per year. (score: 0.03333333507180214)`}</span>
+              <span>{`Match: Employees are entitled to 10 days of paid sick leave per year. (score: 0.032786883413791656)`}</span>
               <span>{`
 `}</span>
-              <span>{`Answer: You are entitled to 20 days of paid annual leave per year.`}</span>
+              <span>{`Answer: Based on the provided context, as a full-time employee, you are entitled to **20 days of paid annual leave per year**.`}</span>
             </code>
           </pre>
         </Col>
@@ -259,8 +247,8 @@ export function RagWithPgvectorVectorStore({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="/learn/by-example/rag-with-in-memory-vector-store/">
-              The RAG with in-memory vector store example
+            <a href="/learn/by-example/rag-azure-ai-search-ingestion/">
+              The Ingest into Azure AI Search example
             </a>
           </span>
         </li>
@@ -269,8 +257,8 @@ export function RagWithPgvectorVectorStore({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="/learn/by-example/rag-ingestion-with-external-vector-store/">
-              The RAG ingestion with external vector store example
+            <a href="/learn/by-example/rag-custom-knowledge-base/">
+              The Retrieve from a custom knowledge base example
             </a>
           </span>
         </li>
@@ -279,8 +267,8 @@ export function RagWithPgvectorVectorStore({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="https://central.ballerina.io/ballerinax/ai.pgvector/latest">
-              The <code>ballerinax/ai.pgvector</code> module
+            <a href="https://central.ballerina.io/ballerinax/ai.azure/latest">
+              The <code>ballerinax/ai.azure</code> module
             </a>
           </span>
         </li>
@@ -289,28 +277,8 @@ export function RagWithPgvectorVectorStore({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="https://central.ballerina.io/ballerinax/ai.milvus/latest">
-              The <code>ballerinax/ai.milvus</code> module
-            </a>
-          </span>
-        </li>
-      </ul>
-      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
-        <li>
-          <span>&#8226;&nbsp;</span>
-          <span>
-            <a href="https://central.ballerina.io/ballerinax/ai.pinecone/latest">
-              The <code>ballerinax/ai.pinecone</code> module
-            </a>
-          </span>
-        </li>
-      </ul>
-      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
-        <li>
-          <span>&#8226;&nbsp;</span>
-          <span>
-            <a href="https://central.ballerina.io/ballerinax/ai.weaviate/latest">
-              The <code>ballerinax/ai.weaviate</code> module
+            <a href="https://central.ballerina.io/ballerinax/azure.ai.search/latest">
+              The <code>ballerinax/azure.ai.search</code> module
             </a>
           </span>
         </li>
@@ -320,8 +288,8 @@ export function RagWithPgvectorVectorStore({ codeSnippets }) {
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="Embeddings with a specific embedding provider"
-            href="/learn/by-example/rag-embedding-provider/"
+            title="Retrieve from pgvector"
+            href="/learn/by-example/rag-pgvector-retrieval/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
@@ -348,7 +316,7 @@ export function RagWithPgvectorVectorStore({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Embeddings with a specific embedding provider
+                  Retrieve from pgvector
                 </span>
               </div>
             </div>
@@ -356,8 +324,8 @@ export function RagWithPgvectorVectorStore({ codeSnippets }) {
         </Col>
         <Col sm={6}>
           <Link
-            title="Vector search with metadata filters"
-            href="/learn/by-example/rag-query-with-metadata-filters/"
+            title="Retrieve from a WSO2 Cloud knowledge base"
+            href="/learn/by-example/rag-wso2-cloud-knowledge-base-retrieval/"
           >
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
@@ -367,7 +335,7 @@ export function RagWithPgvectorVectorStore({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Vector search with metadata filters
+                  Retrieve from a WSO2 Cloud knowledge base
                 </span>
               </div>
               <svg

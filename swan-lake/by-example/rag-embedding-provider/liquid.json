@@ -1,5 +1,5 @@
 {
-  "title": "Embeddings with a specific embedding provider",
+  "title": "Generate embeddings with a specific provider",
   "description": "This BBE demonstrates how to generate embeddings using a specific embedding provider.",
   "keywords": [
     "ballerina",

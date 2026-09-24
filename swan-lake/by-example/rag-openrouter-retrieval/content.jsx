@@ -7,61 +7,48 @@ import Link from "next/link";
 export const codeSnippetData = [
   `import ballerina/ai;
 import ballerina/io;
+import ballerinax/ai.openrouter;
 
-// Define an in-memory vector store.
-final ai:VectorStore vectorStore = check new ai:InMemoryVectorStore();
+// The API key for OpenRouter. Add it to the \`Config.toml\` file.
+configurable string openRouterApiKey = ?;
 
-// Define the embedding provider to use.
-// The example uses the default embedding provider implementation
-// (with configuration added via a Ballerina VS Code command).
-final ai:EmbeddingProvider embeddingProvider = 
-            check ai:getDefaultEmbeddingProvider();
+// Define the embedding provider and the model provider using OpenRouter model identifiers.
+final ai:EmbeddingProvider embeddingProvider =
+        check new openrouter:EmbeddingProvider(openRouterApiKey, "openai/text-embedding-3-small");
+final ai:ModelProvider model = check new openrouter:ModelProvider(openRouterApiKey, "openai/gpt-4o-mini");
 
-// Create the knowledge base with the vector store and embedding provider.
-final ai:KnowledgeBase knowledgeBase = 
-            new ai:VectorKnowledgeBase(vectorStore, embeddingProvider);
-
-// Define the model provider to use.
-// The example uses the default model provider implementation
-// (with configuration added via a Ballerina VS Code command).
-final ai:ModelProvider modelProvider = check ai:getDefaultModelProvider();
+// Create the knowledge base with the in-memory vector store and the embedding provider.
+final ai:KnowledgeBase knowledgeBase =
+        new ai:VectorKnowledgeBase(check new ai:InMemoryVectorStore(), embeddingProvider);
 
 public function main() returns error? {
-    // Ingestion process.
-    // Use data loaders to load documents.
-    ai:DataLoader loader = check new ai:TextDataLoader("./leave_policy.md");
-    ai:Document|ai:Document[] documents = check loader.load();
-
-    // Ingest the documents into the knowledge base. 
-    // When \`ai:Document\`s are ingested, chunking is handled by the knowledge base.
-    // Alternatively, for finer control, you can use the required chunker
-    // (\`ai:Chunker\` implementations) to chunk documents and pass the chunks
-    // as the argument.
+    // An in-memory vector store is emptied when the program stops, so the documents are
+    // ingested in the same program before they are retrieved. With an external vector store,
+    // the ingestion example can be run separately.
+    ai:TextDocument[] documents = [
+        {content: "Full-time employees are entitled to 20 days of paid annual leave per year."},
+        {content: "Employees are entitled to 10 days of paid sick leave per year."},
+        {content: "Parental leave is 12 weeks and must be requested one month in advance."}
+    ];
     check knowledgeBase.ingest(documents);
-    io:println("Ingestion successful");
 
-    // Querying process.
-    string query = 
-        "How many annual leave days can a full-time employee carry forward to the next year?";
+    // Retrieve the most relevant chunks for the query. The query is embedded with the
+    // same model that was used for ingestion.
+    string query = "How much paid vacation do I get?";
+    ai:QueryMatch[] matches = check knowledgeBase.retrieve(query, 2);
+    foreach ai:QueryMatch queryMatch in matches {
+        io:println("Match: ", queryMatch.chunk.content, " (score: ", queryMatch.similarityScore, ")");
+    }
 
-    ai:QueryMatch[] queryMatches = check knowledgeBase.retrieve(query, 10);
-    ai:Chunk[] context = from ai:QueryMatch queryMatch in queryMatches
-                            select queryMatch.chunk;
-
-    // The \`augmentUserQuery\` function augments the user query with the context using 
-    // a generic prompt template.
-    ai:ChatUserMessage augmentedQuery = ai:augmentUserQuery(context, query);
-
-    // Use the \`chat\` method with the \`ai:ChatUserMessage\` with the augmented query.
-    ai:ChatAssistantMessage assistantMessage = check modelProvider->chat(augmentedQuery);
-    
-    io:println("\\nQuery: ", query);
-    io:println("Answer: ", assistantMessage.content);
+    // Augment the user query with the retrieved context and generate the response through OpenRouter.
+    ai:ChatUserMessage augmentedQuery = ai:augmentUserQuery(matches, query);
+    ai:ChatAssistantMessage response = check model->chat(augmentedQuery);
+    io:println("\\nAnswer: ", response?.content);
 }
 `,
 ];
 
-export function RagWithInMemoryVectorStore({ codeSnippets }) {
+export function RagOpenrouterRetrieval({ codeSnippets }) {
   const [codeClick1, updateCodeClick1] = useState(false);
 
   const [outputClick1, updateOutputClick1] = useState(false);
@@ -71,46 +58,41 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
 
   return (
     <Container className="bbeBody d-flex flex-column h-100">
-      <h1>
-        Retrieval-augmented generation (RAG) with an in-memory vector store
-      </h1>
+      <h1>Retrieve and generate with OpenRouter</h1>
 
       <p>
-        Ballerina has high-level, provider-agnostic APIs to ingest data for
-        retrieval-augmented generation (RAG) workflows. These include
-        abstractions such as <code>ai:DataLoader</code>,{" "}
-        <code>ai:VectorStore</code>, <code>ai:EmbeddingProvider</code>, and{" "}
-        <code>ai:KnowledgeBase</code>.
+        The retrieval side of a retrieval-augmented generation (RAG) workflow
+        embeds the user’s question with the same embedding model that was used
+        for ingestion, retrieves the most similar chunks, and augments the
+        prompt sent to the LLM with them. With{" "}
+        <a href="https://openrouter.ai/">OpenRouter</a>, both the embedding
+        model and the LLM can be selected from many providers through a single
+        API key, via the{" "}
+        <a href="https://central.ballerina.io/ballerinax/ai.openrouter/latest">
+          ballerinax/ai.openrouter
+        </a>{" "}
+        module.
       </p>
 
       <p>
-        These abstractions enable you to load documents, convert them into
-        semantically meaningful vector representations using embedding models,
-        and index them into a vector database. Then at generation/querying, you
-        can query semantically similar content from vector databases and use
-        retrieved context in the request to the LLM to generate more accurate
-        responses. The knowledge base (<code>ai: KnowledgeBase</code>)
-        orchestrates this process.
-      </p>
-
-      <p>
-        This example demonstrates implementing RAG workflow using an in-memory
-        vector store.
+        This example demonstrates retrieving chunks embedded through OpenRouter
+        and generating the answer with an OpenRouter-hosted model (e.g.,{" "}
+        <code>openai/gpt-4o-mini</code>,{" "}
+        <code>anthropic/claude-3.5-sonnet</code>). Since it uses the in-memory
+        vector store, the documents are ingested in the same program, as shown
+        in the{" "}
+        <a href="/learn/by-example/rag-openrouter-ingestion/">
+          Ingest with OpenRouter embeddings
+        </a>{" "}
+        example.
       </p>
 
       <blockquote>
         <p>
-          Note: This example uses the default embedding provider and model
-          provider implementations. To generate the necessary configuration,
-          open up the VS Code command palette (<code>Ctrl</code> +{" "}
-          <code>Shift</code> + <code>P</code> or <code>command</code> +{" "}
-          <code>shift</code> + <code>P</code>), and run the{" "}
-          <code>Configure default WSO2 Model Provider</code> command to add your
-          configuration to the <code>Config.toml</code> file. If not already
-          logged in, log in to the Ballerina Copilot when prompted.
-          Alternatively, to use your own keys, use the relevant{" "}
-          <code>ballerinax/ai.&lt;provider&gt;</code> embedding provider
-          implementation.
+          Note: Add the OpenRouter API key to the <code>Config.toml</code> file
+          (e.g.,{" "}
+          <code>openRouterApiKey = &quot;&lt;your-api-key&gt;&quot;</code>).
+          Never commit API keys to source control.
         </p>
       </blockquote>
 
@@ -128,31 +110,9 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
         style={{ marginLeft: "0px" }}
       >
         <Col className="d-flex align-items-start" sm={12}>
-          <button
-            className="bg-transparent border-0 m-0 p-2 ms-auto"
-            onClick={() => {
-              window.open(
-                "https://github.com/ballerina-platform/ballerina-distribution/tree/v2201.13.6/examples/rag-with-in-memory-vector-store",
-                "_blank",
-              );
-            }}
-            aria-label="Edit on Github"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              fill="#000"
-              className="bi bi-github"
-              viewBox="0 0 16 16"
-            >
-              <title>Edit on Github</title>
-              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
-            </svg>
-          </button>
           {codeClick1 ? (
             <button
-              className="bg-transparent border-0 m-0 p-2 "
+              className="bg-transparent border-0 m-0 p-2  ms-auto"
               disabled
               aria-label="Copy to Clipboard Check"
             >
@@ -170,7 +130,7 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
             </button>
           ) : (
             <button
-              className="bg-transparent border-0 m-0 p-2 "
+              className="bg-transparent border-0 m-0 p-2  ms-auto"
               onClick={() => {
                 updateCodeClick1(true);
                 copyToClipboard(codeSnippetData[0]);
@@ -259,12 +219,12 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
         <Col sm={12}>
           <pre ref={ref1}>
             <code className="d-flex flex-column">
-              <span>{`\$ bal run rag_with_in_memory_vector_store.bal`}</span>
-              <span>{`Ingestion successful`}</span>
+              <span>{`\$ bal run rag_openrouter_retrieval.bal`}</span>
+              <span>{`Match: Full-time employees are entitled to 20 days of paid annual leave per year. (score: 0.510345906148898)`}</span>
+              <span>{`Match: Employees are entitled to 10 days of paid sick leave per year. (score: 0.4908126886666586)`}</span>
               <span>{`
 `}</span>
-              <span>{`Query: How many annual leave days can a full-time employee carry forward to the next year?`}</span>
-              <span>{`Answer: A full-time employee can carry forward up to 5 unused annual leave days to the next year.`}</span>
+              <span>{`Answer: You are entitled to 20 days of paid annual leave per year.`}</span>
             </code>
           </pre>
         </Col>
@@ -276,8 +236,8 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="https://github.com/ballerina-platform/ballerina-distribution/tree/master/examples/rag-with-in-memory-vector-store/leave_policy.md">
-              Sample policy document
+            <a href="/learn/by-example/rag-openrouter-ingestion/">
+              The Ingest with OpenRouter embeddings example
             </a>
           </span>
         </li>
@@ -286,8 +246,8 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="/learn/by-example/rag-ingestion-with-external-vector-store/">
-              RAG ingestion with external vector store example
+            <a href="/learn/by-example/rag-vertex-ai-retrieval/">
+              The Retrieve and generate with Google Vertex AI example
             </a>
           </span>
         </li>
@@ -296,8 +256,8 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="/learn/by-example/rag-query-with-external-vector-store/">
-              RAG query with external vector store example
+            <a href="/learn/by-example/rag-in-memory-vector-store-retrieval/">
+              The Retrieve from an in-memory vector store example
             </a>
           </span>
         </li>
@@ -306,38 +266,8 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="https://central.ballerina.io/ballerinax/ai.milvus/latest">
-              The <code>ballerinax/ai.milvus</code> module
-            </a>
-          </span>
-        </li>
-      </ul>
-      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
-        <li>
-          <span>&#8226;&nbsp;</span>
-          <span>
-            <a href="https://central.ballerina.io/ballerinax/ai.pinecone/latest">
-              The <code>ballerinax/ai.pinecone</code> module
-            </a>
-          </span>
-        </li>
-      </ul>
-      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
-        <li>
-          <span>&#8226;&nbsp;</span>
-          <span>
-            <a href="https://central.ballerina.io/ballerinax/ai.pgvector/latest">
-              The <code>ballerinax/ai.pgvector</code> module
-            </a>
-          </span>
-        </li>
-      </ul>
-      <ul style={{ marginLeft: "0px" }} class="relatedLinks">
-        <li>
-          <span>&#8226;&nbsp;</span>
-          <span>
-            <a href="https://central.ballerina.io/ballerinax/ai.weaviate/latest">
-              The <code>ballerinax/ai.weaviate</code> module
+            <a href="https://central.ballerina.io/ballerinax/ai.openrouter/latest">
+              The <code>ballerinax/ai.openrouter</code> module
             </a>
           </span>
         </li>
@@ -347,8 +277,8 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="Direct LLM calls with a local model using Ollama"
-            href="/learn/by-example/direct-llm-calls-with-ollama/"
+            title="Retrieve and generate with Google Vertex AI"
+            href="/learn/by-example/rag-vertex-ai-retrieval/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
@@ -375,7 +305,7 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Direct LLM calls with a local model using Ollama
+                  Retrieve and generate with Google Vertex AI
                 </span>
               </div>
             </div>
@@ -383,8 +313,8 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
         </Col>
         <Col sm={6}>
           <Link
-            title="RAG ingestion with external vector store"
-            href="/learn/by-example/rag-ingestion-with-external-vector-store/"
+            title="Filter results by metadata"
+            href="/learn/by-example/rag-query-with-metadata-filters/"
           >
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
@@ -394,7 +324,7 @@ export function RagWithInMemoryVectorStore({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  RAG ingestion with external vector store
+                  Filter results by metadata
                 </span>
               </div>
               <svg

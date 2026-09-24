@@ -152,7 +152,7 @@ export function RagCustomKnowledgeBase({ codeSnippets }) {
 
   return (
     <Container className="bbeBody d-flex flex-column h-100">
-      <h1>Custom knowledge base</h1>
+      <h1>Retrieve from a custom knowledge base</h1>
 
       <p>
         The <code>ai:KnowledgeBase</code> type is the abstraction used for
@@ -339,8 +339,8 @@ export function RagCustomKnowledgeBase({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="/learn/by-example/rag-with-in-memory-vector-store/">
-              The RAG with in-memory vector store example
+            <a href="/learn/by-example/rag-in-memory-vector-store-retrieval/">
+              The Retrieve from an in-memory vector store example
             </a>
           </span>
         </li>
@@ -350,7 +350,7 @@ export function RagCustomKnowledgeBase({ codeSnippets }) {
           <span>&#8226;&nbsp;</span>
           <span>
             <a href="/learn/by-example/rag-query-with-metadata-filters/">
-              The Vector search with metadata filters example
+              The Filter results by metadata example
             </a>
           </span>
         </li>
@@ -371,7 +371,7 @@ export function RagCustomKnowledgeBase({ codeSnippets }) {
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="Vector search with metadata filters"
+            title="Filter results by metadata"
             href="/learn/by-example/rag-query-with-metadata-filters/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
@@ -399,14 +399,17 @@ export function RagCustomKnowledgeBase({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Vector search with metadata filters
+                  Filter results by metadata
                 </span>
               </div>
             </div>
           </Link>
         </Col>
         <Col sm={6}>
-          <Link title="MCP service" href="/learn/by-example/mcp-service/">
+          <Link
+            title="Agentic RAG with WSO2 Cloud"
+            href="/learn/by-example/agentic-rag-with-wso2-integration-knowledge-base/"
+          >
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
                 <span className="btnNext">Next</span>
@@ -415,7 +418,7 @@ export function RagCustomKnowledgeBase({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  MCP service
+                  Agentic RAG with WSO2 Cloud
                 </span>
               </div>
               <svg

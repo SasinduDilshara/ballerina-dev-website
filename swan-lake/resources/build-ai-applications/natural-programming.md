@@ -79,22 +79,6 @@ function analyzeReview(string review) returns ReviewAnalysis|error => natural (m
 
 See the [Natural functions](/learn/by-example/natural-functions/) example.
 
-## Natural expressions and the AI library
-
-Natural expressions are the language-level counterpart of the `generate` method of `ai:ModelProvider`; both send a prompt and the schema of the expected type to the LLM and bind the response. Use a natural expression when the prompt is a fixed part of the program's logic, and `generate` when the prompt is constructed dynamically or when working with the provider directly. Agents build on the same model providers and add tools, memory, and a reasoning-action loop; see [Build an AI agent](/learn/build-an-ai-agent/).
-
-## Compile-time support
-
-The [`ballerina/ai.np`](https://central.ballerina.io/ballerina/ai.np/latest) module provides the compile-time support for natural programming, including the generation of the JSON schemas for the types used with natural expressions. It is bundled with the distribution and does not need to be imported explicitly to use natural expressions.
-
-## Run a program with natural expressions
-
-Configure the model provider (for the default model provider, run `Configure default WSO2 Model Provider` from the VS Code command palette to add the configuration to the `Config.toml` file) and run the program with the `--experimental` flag.
-
-```
-$ bal run --experimental
-```
-
 ## Learn more
 
 - [Work with Large Language Models (LLMs) using natural expressions](/learn/work-with-llms-using-natural-expressions/) tutorial

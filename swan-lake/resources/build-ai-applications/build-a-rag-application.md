@@ -17,13 +17,13 @@ Retrieval-augmented generation (RAG) grounds the responses of a large language m
 
 The [`ballerina/ai`](https://central.ballerina.io/ballerina/ai/latest) module provides an abstraction for each step, so the implementations (e.g., the vector database or the embedding model) can be swapped without changing the workflow.
 
-| Step | Abstraction | Built-in implementations | External implementations |
-|---|---|---|---|
-| Load documents | `ai:DataLoader` | `ai:TextDataLoader` (PDF, DOCX, Markdown, HTML, PPTX) | `ballerinax/ai.microsoft.sharepoint` |
-| Chunk documents | `ai:Chunker` | `ai:GenericRecursiveChunker`, `ai:MarkdownChunker`, `ai:HtmlChunker` | |
-| Embed chunks | `ai:EmbeddingProvider` | `ai:getDefaultEmbeddingProvider()` | `ballerinax/ai.openai`, `ballerinax/ai.azure`, `ballerinax/ai.openrouter`, `ballerinax/ai.googleapis.vertex` |
-| Store vectors | `ai:VectorStore` | `ai:InMemoryVectorStore` | `ballerinax/ai.pgvector`, `ballerinax/ai.pinecone`, `ballerinax/ai.milvus`, `ballerinax/ai.weaviate` |
-| Index and retrieve | `ai:KnowledgeBase` | `ai:VectorKnowledgeBase` | `ballerinax/ai.azure` (Azure AI Search), custom implementations |
+| Step | Abstraction | Reference implementations |
+|---|---|---|
+| Load documents | `ai:DataLoader` | `ai:TextDataLoader` (PDF, DOCX, Markdown, HTML, PPTX), [`ballerinax/ai.microsoft.sharepoint`](https://central.ballerina.io/ballerinax/ai.microsoft.sharepoint/latest) |
+| Chunk documents | `ai:Chunker` | `ai:GenericRecursiveChunker`, `ai:MarkdownChunker`, `ai:HtmlChunker` |
+| Embed chunks | `ai:EmbeddingProvider` | `ai:getDefaultEmbeddingProvider()`, [`ballerinax/ai.openai`](https://central.ballerina.io/ballerinax/ai.openai/latest), [`ballerinax/ai.azure`](https://central.ballerina.io/ballerinax/ai.azure/latest), [`ballerinax/ai.openrouter`](https://central.ballerina.io/ballerinax/ai.openrouter/latest), [`ballerinax/ai.googleapis.vertex`](https://central.ballerina.io/ballerinax/ai.googleapis.vertex/latest) |
+| Store vectors | `ai:VectorStore` | `ai:InMemoryVectorStore`, [`ballerinax/ai.pgvector`](https://central.ballerina.io/ballerinax/ai.pgvector/latest), [`ballerinax/ai.pinecone`](https://central.ballerina.io/ballerinax/ai.pinecone/latest), [`ballerinax/ai.milvus`](https://central.ballerina.io/ballerinax/ai.milvus/latest), [`ballerinax/ai.weaviate`](https://central.ballerina.io/ballerinax/ai.weaviate/latest) |
+| Index and retrieve | `ai:KnowledgeBase` | `ai:VectorKnowledgeBase`, [`ballerinax/ai.azure`](https://central.ballerina.io/ballerinax/ai.azure/latest) (Azure AI Search), custom implementations |
 
 ## Set up the providers and the knowledge base
 
@@ -48,7 +48,7 @@ final ai:VectorStore vectorStore = check new pgvector:VectorStore("localhost", "
         "vector_db", tableName = "policy_vectors", configs = {vectorDimension: 1536});
 ```
 
-See the [RAG with pgvector vector store](/learn/by-example/rag-with-pgvector-vector-store/) and [RAG ingestion with external vector store](/learn/by-example/rag-ingestion-with-external-vector-store/) (Pinecone) examples. To use your own embedding model, see [Configure model and embedding providers](/learn/configure-model-and-embedding-providers/).
+See the [Retrieve from pgvector](/learn/by-example/rag-pgvector-retrieval/), [Retrieve from Pinecone](/learn/by-example/rag-query-with-external-vector-store/), and [Ingest into Pinecone](/learn/by-example/rag-ingestion-with-external-vector-store/) examples. For RAG workflows that use other providers end to end, see the [Retrieve and generate with Google Vertex AI](/learn/by-example/rag-vertex-ai-retrieval/) and [Retrieve and generate with OpenRouter](/learn/by-example/rag-openrouter-retrieval/) examples. To use your own embedding model, see [Configure model and embedding providers](/learn/configure-model-and-embedding-providers/).
 
 ## Ingest documents
 
@@ -67,26 +67,44 @@ Documents can also be created directly, for example, from data fetched from anot
 ai:TextDocument document = {content: "Full-time employees are entitled to 20 days of paid annual leave per year."};
 ```
 
-### Chunk documents
+### Ingest into the knowledge base
 
-When documents are ingested into an `ai:VectorKnowledgeBase`, chunking is handled automatically based on the document type (the `ai:AUTO` configuration). For finer control, chunk explicitly and ingest the chunks. The chunkers start with the specified unit (e.g., Markdown headers or paragraphs) and recursively fall back to smaller units when a chunk exceeds the maximum size.
-
-```ballerina
-ai:Chunker chunker = new ai:MarkdownChunker(maxChunkSize = 300, maxOverlapSize = 40);
-ai:Chunk[] chunks = check chunker.chunk(document);
-```
-
-See the [Document loading](/learn/by-example/rag-document-loading/) and [Document chunking](/learn/by-example/rag-document-chunking/) examples.
-
-### Index the chunks
+A single call to `ingest` takes the loaded documents through the whole ingestion pipeline.
 
 ```ballerina
 check knowledgeBase.ingest(documents);
 ```
 
+Internally, the `ai:VectorKnowledgeBase` performs three steps.
+
+1. **Chunking**: each document is split into chunks by the configured chunker. With the default `ai:AUTO` setting, the chunker is chosen from the document's MIME type or file name: Markdown documents use `ai:MarkdownChunker`, HTML documents use `ai:HtmlChunker`, and everything else uses `ai:GenericRecursiveChunker`. The chunkers start from a large unit (e.g., a Markdown header or a paragraph) and recursively fall back to smaller units (e.g., sentences) until each chunk fits the maximum size (200 characters by default, with a 40-character overlap). Chunks that are passed in directly are split further only if they exceed the limit.
+2. **Embedding**: all chunks are sent to the embedding provider in a single `batchEmbed` call, which returns one vector per chunk.
+3. **Storing**: each chunk is paired with its vector as an `ai:VectorEntry` and added to the vector store, where it becomes searchable.
+
+To control chunking, pass a chunker to the knowledge base when creating it, or pass `ai:DISABLE` to store each document as a single chunk.
+
+```ballerina
+final ai:KnowledgeBase knowledgeBase = new ai:VectorKnowledgeBase(vectorStore, embeddingProvider,
+        new ai:MarkdownChunker(maxChunkSize = 300, maxOverlapSize = 40));
+```
+
+See the [Load documents](/learn/by-example/rag-document-loading/), [Chunk documents](/learn/by-example/rag-document-chunking/), [Implement a custom chunker](/learn/by-example/rag-with-custom-chunker/), [Ingest without chunking](/learn/by-example/rag-without-chunking/), and [Ingest into an in-memory vector store](/learn/by-example/rag-in-memory-vector-store-ingestion/) examples.
+
 ## Query the knowledge base
 
-Retrieve the most relevant chunks for a question, augment the question with them, and call the model.
+Retrieving is the mirror image of ingesting. A single call to `retrieve` returns the chunks most relevant to a question.
+
+```ballerina
+ai:QueryMatch[] matches = check knowledgeBase.retrieve(query, 3);
+```
+
+Internally, the knowledge base performs the following steps.
+
+1. **Embed the query**: the question is converted into a vector with the same embedding provider that was used during ingestion, so that it lives in the same vector space as the stored chunks.
+2. **Compare**: the vector store is queried with the query vector, the maximum number of results (`topK`, 10 by default), and any metadata filters. The store compares the query vector with the stored vectors and returns the closest ones with a similarity score.
+3. **Return the matches**: each result is returned as an `ai:QueryMatch` holding the original chunk and its similarity score, ordered by relevance.
+
+The retrieved chunks are then used to ground the answer. `ai:augmentUserQuery` builds a user message that instructs the model to answer the question based only on the provided context, embeds the chunks as that context, and appends the question. The message is sent to the model with `chat`.
 
 ```ballerina
 final ai:ModelProvider model = check ai:getDefaultModelProvider();
@@ -99,7 +117,7 @@ public function main() returns error? {
 }
 ```
 
-See the [RAG with in-memory vector store](/learn/by-example/rag-with-in-memory-vector-store/) and [RAG query with external vector store](/learn/by-example/rag-query-with-external-vector-store/) examples.
+See the [Retrieve from an in-memory vector store](/learn/by-example/rag-in-memory-vector-store-retrieval/) and [Retrieve from Pinecone](/learn/by-example/rag-query-with-external-vector-store/) examples. To compare embeddings directly, see the [Generate embeddings](/learn/by-example/rag-embeddings/) example.
 
 ## Filter by metadata
 
@@ -123,28 +141,51 @@ ai:QueryMatch[] matches = check knowledgeBase.retrieve(query, 2, {
 check knowledgeBase.deleteByFilter({filters: [{key: "year", operator: ai:LESS_THAN, value: 2025}]});
 ```
 
-See the [Vector search with metadata filters](/learn/by-example/rag-query-with-metadata-filters/) example.
+See the [Filter results by metadata](/learn/by-example/rag-query-with-metadata-filters/) example.
 
 ## Use other knowledge bases
 
-Any retrieval backend can be integrated by implementing the `ai:KnowledgeBase` type (`ingest`, `retrieve`, and `deleteByFilter`). The [`ballerinax/ai.azure`](https://central.ballerina.io/ballerinax/ai.azure/latest) module provides a knowledge base backed by Azure AI Search, and the [Custom knowledge base](/learn/by-example/rag-custom-knowledge-base/) example shows a keyword-based implementation.
+Any retrieval backend can be integrated by implementing the `ai:KnowledgeBase` type (`ingest`, `retrieve`, and `deleteByFilter`). The [`ballerinax/ai.azure`](https://central.ballerina.io/ballerinax/ai.azure/latest) module provides a knowledge base backed by Azure AI Search (see the [Retrieve from Azure AI Search](/learn/by-example/rag-azure-ai-search-retrieval/) example). The [`ballerinax/ai.wso2.integration`](https://central.ballerina.io/ballerinax/ai.wso2.integration/latest) module provides a retrieve-only knowledge base hosted on the WSO2 Integration platform, where the documents are ingested (see the [Retrieve from a WSO2 Cloud knowledge base](/learn/by-example/rag-wso2-cloud-knowledge-base-retrieval/) example). The [Retrieve from a custom knowledge base](/learn/by-example/rag-custom-knowledge-base/) example shows a keyword-based implementation.
 
 ## Use RAG from an agent
 
-A knowledge base can be used as a tool of an agent, so the agent retrieves context when it decides it is needed.
+A knowledge base can be used as a tool of an agent, so the agent retrieves context only when it decides it is needed, and can combine it with other tools. Wrap the retrieval in a function annotated with `@ai:AgentTool` and pass it to the agent.
 
 ```ballerina
-# Searches the HR policy documents.
+import ballerina/ai;
+import ballerina/io;
+
+# Searches the HR policy documents and returns the most relevant passages.
 # + query - The search query
+# + return - The matching passages
 @ai:AgentTool
 isolated function searchPolicies(string query) returns string[]|error {
     ai:QueryMatch[] matches = check knowledgeBase.retrieve(query, 3);
     return matches.map(queryMatch => queryMatch.chunk.content.toString());
 }
+
+final ai:Agent hrAgent = check new ({
+    systemPrompt: {
+        role: "HR Assistant",
+        instructions: string `You answer employee questions about HR policies. 
+            Always look up the policy documents using the tools before answering, 
+            and base your answer only on the retrieved passages.`
+    },
+    model: check ai:getDefaultModelProvider(),
+    tools: [searchPolicies]
+});
+
+public function main() returns error? {
+    string response = check hrAgent.run("How many days of annual leave do I get?", "employee-1");
+    io:println(response);
+}
 ```
+
+The `knowledgeBase` is the `ai:KnowledgeBase` set up and populated in the earlier sections. See [Build an AI agent](/learn/build-an-ai-agent/) for the agent concepts.
 
 ## Learn more
 
+- [Load documents from multiple sources](/learn/by-example/rag-document-sources/), [Implement a custom chunker](/learn/by-example/rag-with-custom-chunker/), [Vector store operations](/learn/by-example/rag-vector-store-operations/), and [Augment the prompt with retrieved context](/learn/by-example/rag-augment-prompt/) examples
 - [Build an AI agent](/learn/build-an-ai-agent/)
 - [Configure model and embedding providers](/learn/configure-model-and-embedding-providers/)
 - The RAG examples in [Ballerina by Example](/learn/by-example/)

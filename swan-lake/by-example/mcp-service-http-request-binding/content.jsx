@@ -78,21 +78,20 @@ export function McpServiceHttpRequestBinding({ codeSnippets }) {
       <h1>Model Context Protocol (MCP) tools with HTTP request binding</h1>
 
       <p>
-        MCP tools defined as remote methods of an <code>mcp:Service</code>{" "}
-        receive only the arguments provided by the AI client. When an MCP server
-        is exposed over the Streamable HTTP transport, tools often need
-        information from the underlying HTTP request too, such as tenant
-        identifiers, correlation IDs, or authorization headers set by a gateway.
+        MCP tools defined as remote methods of an{" "}
+        <code>mcp:StreamableHttpService</code> receive the arguments provided by
+        the AI client. Tools often need information from the underlying HTTP
+        request too, such as tenant identifiers, correlation IDs, or
+        authorization headers set by a gateway.
       </p>
 
       <p>
-        Declaring the service with the <code>mcp:StreamableHttpService</code>{" "}
-        type allows tool remote methods to additionally bind HTTP request
-        information: an <code>http:Headers</code> parameter, an{" "}
-        <code>http:Request</code> parameter, or <code>@http:Header</code>{" "}
-        annotated parameters. These parameters are excluded from the tool’s
-        input schema, so they are never provided by the AI client and are
-        instead populated from the incoming request.
+        Tool remote methods can additionally bind HTTP request information: an{" "}
+        <code>http:Headers</code> parameter, an <code>http:Request</code>{" "}
+        parameter, or <code>@http:Header</code> annotated parameters. These
+        parameters are excluded from the tool’s input schema, so they are never
+        provided by the AI client and are instead populated from the incoming
+        request.
       </p>
 
       <p>
@@ -338,10 +337,7 @@ export function McpServiceHttpRequestBinding({ codeSnippets }) {
 
       <Row className="mt-auto mb-5">
         <Col sm={6}>
-          <Link
-            title="MCP service with sessions"
-            href="/learn/by-example/mcp-service-with-sessions/"
-          >
+          <Link title="MCP client" href="/learn/by-example/mcp-client/">
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -367,7 +363,7 @@ export function McpServiceHttpRequestBinding({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  MCP service with sessions
+                  MCP client
                 </span>
               </div>
             </div>

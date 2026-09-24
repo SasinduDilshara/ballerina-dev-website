@@ -86,7 +86,7 @@ export function RagQueryWithExternalVectorStore({ codeSnippets }) {
 
   return (
     <Container className="bbeBody d-flex flex-column h-100">
-      <h1>Retrieval-augmented generation (RAG) query</h1>
+      <h1>Retrieve from Pinecone</h1>
 
       <p>
         Retrieval-augmented generation (RAG) is a technique that enhances
@@ -109,16 +109,22 @@ export function RagQueryWithExternalVectorStore({ codeSnippets }) {
       </p>
 
       <p>
-        This example demonstrates how to query a knowledge base to retrieve
-        relevant documents and use them with a language model to answer
-        questions based on the retrieved context.
+        This example demonstrates how to retrieve relevant chunks from a
+        knowledge base backed by a{" "}
+        <a href="https://www.pinecone.io/">Pinecone</a> index and use them with
+        a language model to answer questions based on the retrieved context,
+        using both a custom prompt with the <code>generate</code> method and{" "}
+        <code>ai:augmentUserQuery</code> with the <code>chat</code> method.
       </p>
 
       <blockquote>
         <p>
-          Note: You can follow the{" "}
-          <a href="/learn/by-example/rag-ingestion/">RAG ingestion</a> example
-          to ingest data first.
+          Prerequisite: Run the{" "}
+          <a href="/learn/by-example/rag-ingestion-with-external-vector-store/">
+            Ingest into Pinecone
+          </a>{" "}
+          example first. It populates the Pinecone index that this example
+          queries.
         </p>
       </blockquote>
 
@@ -306,7 +312,9 @@ export function RagQueryWithExternalVectorStore({ codeSnippets }) {
         <li>
           <span>&#8226;&nbsp;</span>
           <span>
-            <a href="/learn/by-example/rag-ingestion/">RAG ingestion example</a>
+            <a href="/learn/by-example/rag-ingestion-with-external-vector-store/">
+              Ingest into Pinecone example
+            </a>
           </span>
         </li>
       </ul>
@@ -355,8 +363,8 @@ export function RagQueryWithExternalVectorStore({ codeSnippets }) {
       <Row className="mt-auto mb-5">
         <Col sm={6}>
           <Link
-            title="RAG ingestion with external vector store"
-            href="/learn/by-example/rag-ingestion-with-external-vector-store/"
+            title="Retrieve from an in-memory vector store"
+            href="/learn/by-example/rag-in-memory-vector-store-retrieval/"
           >
             <div className="btnContainer d-flex align-items-center me-auto">
               <svg
@@ -383,7 +391,7 @@ export function RagQueryWithExternalVectorStore({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([true, false])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  RAG ingestion with external vector store
+                  Retrieve from an in-memory vector store
                 </span>
               </div>
             </div>
@@ -391,8 +399,8 @@ export function RagQueryWithExternalVectorStore({ codeSnippets }) {
         </Col>
         <Col sm={6}>
           <Link
-            title="Document loading"
-            href="/learn/by-example/rag-document-loading/"
+            title="Retrieve from pgvector"
+            href="/learn/by-example/rag-pgvector-retrieval/"
           >
             <div className="btnContainer d-flex align-items-center ms-auto">
               <div className="d-flex flex-column me-4">
@@ -402,7 +410,7 @@ export function RagQueryWithExternalVectorStore({ codeSnippets }) {
                   onMouseEnter={() => updateBtnHover([false, true])}
                   onMouseOut={() => updateBtnHover([false, false])}
                 >
-                  Document loading
+                  Retrieve from pgvector
                 </span>
               </div>
               <svg

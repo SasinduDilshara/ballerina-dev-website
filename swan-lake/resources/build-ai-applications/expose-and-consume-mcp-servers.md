@@ -27,6 +27,13 @@ type Weather record {|
     string condition;
 |};
 
+type ForecastItem record {|
+    string date;
+    int high;
+    int low;
+    string condition;
+|};
+
 listener mcp:StreamableHttpListener mcpListener = new (9090);
 
 service mcp:Service /mcp on mcpListener {
@@ -38,39 +45,47 @@ service mcp:Service /mcp on mcpListener {
     remote function getCurrentWeather(string city) returns Weather|error {
         return {location: city, temperature: 27.0, condition: "Sunny"};
     }
+
+    # Get the weather forecast for the upcoming days.
+    #
+    # + city - City name (e.g., "London", "Tokyo")
+    # + days - Number of days to forecast (1 - 7)
+    # + return - One forecast entry per day
+    remote function getWeatherForecast(string city, int days) returns ForecastItem[]|error {
+        return from int i in 1 ... days
+            select {date: string `2026-10-0${i}`, high: 30, low: 22, condition: "Cloudy"};
+    }
+
+    # Get the air quality index for a city.
+    #
+    # + city - City name
+    # + return - The air quality index (0 - 500)
+    remote function getAirQualityIndex(string city) returns int|error {
+        return 42;
+    }
 }
 ```
 
+Each remote method becomes one MCP tool: `getCurrentWeather`, `getWeatherForecast`, and `getAirQualityIndex`. The parameter names, types, and the documentation comments become the tool's input schema and description, so document the parameters carefully; that text is what the AI client uses to decide when and how to call the tool.
+
 > **Note:** `mcp:Listener` is deprecated in favor of `mcp:StreamableHttpListener`, which makes the transport explicit.
 
-For full control over tool listing and invocation, declare the service with the `mcp:AdvancedService` type and implement the `onListTools` and `onCallTool` remote methods. See the [MCP service](/learn/by-example/mcp-service/) and [MCP advanced service](/learn/by-example/mcp-service-advanced/) examples.
-
-## Manage sessions
-
-The `@mcp:StreamableHttpServiceConfig` annotation configures a service exposed over the Streamable HTTP transport, including the server information and the session mode.
-
-- `mcp:STATEFUL`: a session ID is assigned when a client initializes the connection, and an `mcp:Session` is maintained per client.
-- `mcp:STATELESS`: each request is independent.
-- `mcp:AUTO` (the default): decided based on whether the client initializes a session.
-
-In stateful mode, the `onCallTool` method of an `mcp:StreamableHttpAdvancedService` receives the client's `mcp:Session`, which can store and retrieve state across tool calls.
+For full control over tool listing and invocation, declare the service with the `mcp:AdvancedService` type and implement the `onListTools` and `onCallTool` remote methods. `onListTools` returns the tool definitions with their input schemas, and `onCallTool` receives the tool name and arguments and dispatches the call yourself. This is useful when the tools are defined dynamically or when the input schema must be hand-written.
 
 ```ballerina
-@mcp:StreamableHttpServiceConfig {
-    info: {name: "Shopping Cart MCP Server", version: "1.0.0"},
-    sessionMode: mcp:STATEFUL
-}
-service mcp:StreamableHttpAdvancedService /mcp on new mcp:StreamableHttpListener(9091) {
+service mcp:AdvancedService /mcp on mcpListener {
 
     isolated remote function onListTools() returns mcp:ListToolsResult|mcp:ServerError => {
         tools: [
             {
-                name: "addItem",
-                description: "Add an item to the shopping cart of the current session",
+                name: "getCurrentWeather",
+                description: "Get current weather conditions for a location",
                 inputSchema: {
                     "type": "object",
-                    "properties": {"item": {"type": "string", "description": "The name of the item"}},
-                    "required": ["item"]
+                    "properties": {
+                        "city": {"type": "string", "description": "City name"}
+                    },
+                    "required": ["city"]
                 }
             }
         ]
@@ -78,30 +93,20 @@ service mcp:StreamableHttpAdvancedService /mcp on new mcp:StreamableHttpListener
 
     isolated remote function onCallTool(mcp:CallToolParams params, mcp:Session? session)
             returns mcp:CallToolResult|mcp:ServerError {
-        if session is () {
-            return error("A session is required to use the shopping cart");
-        }
-        // Read and update the state stored in the session.
-        string[] items = [];
-        if session.hasKey("items") {
-            string[]|mcp:Error storedItems = session.getWithType("items");
-            if storedItems is mcp:Error {
-                return error("Failed to read the shopping cart", storedItems);
+        if params.name == "getCurrentWeather" {
+            record {|string city;|}|error arguments = params.arguments.cloneWithType();
+            if arguments is error {
+                return error("Invalid arguments", arguments);
             }
-            items = storedItems;
+            Weather weather = {location: arguments.city, temperature: 27.0, condition: "Sunny"};
+            return {content: [{'type: "text", text: weather.toJsonString()}]};
         }
-        record {|string item;|}|error arguments = params.arguments.cloneWithType();
-        if arguments is error {
-            return error("Invalid arguments", arguments);
-        }
-        items.push(arguments.item);
-        session.set("items", items);
-        return {content: [{'type: "text", text: string `The cart now has ${items.length()} item(s).`}]};
+        return error("Unknown tool: " + params.name);
     }
 }
 ```
 
-See the [MCP service with sessions](/learn/by-example/mcp-service-with-sessions/) example.
+See the [MCP service](/learn/by-example/mcp-service/) and [MCP advanced service](/learn/by-example/mcp-service-advanced/) examples.
 
 ## Bind HTTP request information in tools
 
@@ -138,7 +143,7 @@ See the [MCP tools with HTTP request binding](/learn/by-example/mcp-service-http
 
 ## Secure the MCP server
 
-Since the Streamable HTTP transport is built on HTTP, an MCP service is secured like an `http:Service`. Configure TLS on the listener with `secureSocket`, and configure authentication and authorization via the `auth` field of `httpConfig` in the `@mcp:StreamableHttpServiceConfig` annotation. Basic authentication with a file or LDAP user store, JWT, and OAuth2 are supported.
+Since the Streamable HTTP transport is built on HTTP, an MCP service is secured like an `http:Service`. Configure TLS on the listener with `secureSocket`, and configure authentication and authorization via the `auth` field of `httpConfig` in the `@mcp:StreamableHttpServiceConfig` annotation. JWT, OAuth2 introspection, and basic authentication with a file or LDAP user store are supported.
 
 ```ballerina
 listener mcp:StreamableHttpListener securedListener = new (9093,
@@ -155,7 +160,14 @@ listener mcp:StreamableHttpListener securedListener = new (9093,
     httpConfig: {
         auth: [
             {
-                fileUserStoreConfig: {},
+                jwtValidatorConfig: {
+                    issuer: "wso2",
+                    audience: "ballerina",
+                    signatureConfig: {
+                        certFile: "../resource/path/to/public.crt"
+                    },
+                    scopeKey: "scp"
+                },
                 scopes: ["admin"]
             }
         ]
@@ -164,15 +176,6 @@ listener mcp:StreamableHttpListener securedListener = new (9093,
 service mcp:StreamableHttpService /mcp on securedListener {
     // ...
 }
-```
-
-The users of the file user store are defined in the `Config.toml` file.
-
-```toml
-[[ballerina.auth.users]]
-username="alice"
-password="alice@123"
-scopes=["admin"]
 ```
 
 See the [MCP service security](/learn/by-example/mcp-service-security/) example.
@@ -193,16 +196,18 @@ mcp:CallToolResult result = check mcpClient->callTool({
 check mcpClient->close();
 ```
 
-Pass `auth` (e.g., `auth = {username: "alice", password: "alice@123"}`) and other `http:ClientConfiguration` fields to the client constructor for secured servers, and pass headers to `callTool` when tools bind HTTP headers. See the [MCP client](/learn/by-example/mcp-client/) example.
+Pass `auth` (e.g., `auth = {token: "<jwt>"}` for a bearer token) and other `http:ClientConfiguration` fields to the client constructor for secured servers, and pass headers to `callTool` when tools bind HTTP headers. See the [MCP client](/learn/by-example/mcp-client/) example.
 
 ## Consume MCP tools from an agent
 
-Add an `ai:McpToolKit` to the tools of an agent to use all the tools of a server, or a subset by listing the permitted tool names.
+Add an `ai:McpToolKit` to the tools of an agent. The tool kit connects to the MCP server, discovers its tools, and makes them available to the agent like any other tool.
+
+To use all the tools exposed by the server, pass only the server URL.
 
 ```ballerina
 import ballerina/ai;
 
-final ai:McpToolKit weatherTools = check new ("http://localhost:9090/mcp", ["getCurrentWeather"]);
+final ai:McpToolKit weatherTools = check new ("http://localhost:9090/mcp");
 
 final ai:Agent weatherAgent = check new ({
     systemPrompt: {
@@ -210,6 +215,22 @@ final ai:Agent weatherAgent = check new ({
         instructions: "You assist users based on accurate and timely weather information."
     },
     tools: [weatherTools],
+    model: check ai:getDefaultModelProvider()
+});
+```
+
+To restrict the agent to specific tools of the server, pass the names of the permitted tools as the second argument. The agent then sees only those tools.
+
+```ballerina
+final ai:McpToolKit currentWeatherOnly = check new ("http://localhost:9090/mcp",
+        ["getCurrentWeather", "getAirQualityIndex"]);
+
+final ai:Agent currentWeatherAgent = check new ({
+    systemPrompt: {
+        role: "Weather-aware AI Assistant",
+        instructions: "You answer questions about the current weather and air quality."
+    },
+    tools: [currentWeatherOnly],
     model: check ai:getDefaultModelProvider()
 });
 ```
